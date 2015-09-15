@@ -3,6 +3,18 @@
 STANDARD_SPACE = "    "
 
 
+def single_line_input():
+    return input(">").strip()
+
+
+def inflate_space(code):
+    return STANDARD_SPACE+code
+
+
+def continue_input():
+    return input(STANDARD_SPACE).strip()
+
+
 def filter_real_codes(codes):
     return [code for code in codes if code and not code.startswith('"')]
 

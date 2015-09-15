@@ -1,32 +1,22 @@
 # coding: utf8
 
+import os
 import sys
 import subprocess
 
-from handlers import PackageHandler
-
-STANDARD_SPACE = "    "
-
-
-def single_line_input():
-    return input(">").strip()
-
-
-def inflate_space(code):
-    return STANDARD_SPACE+code
-
-
-def continue_input():
-    return input(STANDARD_SPACE).strip()
+from .handlers import PackageHandler
 
 
 class GoCodeCache:
-    GO_CODE_TEMPLATE = "go_template"
     CODE_TEMPLATE = "{%code_area%}"
     FUNC_TEMPLATE = "{%func_area%}"
-    CACHE_FILE_PATH = "console/_cache/main.go"
 
-    def __init__(self):
+    def __init__(self, path):
+        self.GO_CODE_TEMPLATE = os.path.join(path, 'go_template')
+        self.CACHE_FILE_PATH = os.path.join(
+            path, 'console', '_cache', 'main.go'
+        )
+
         with open(self.GO_CODE_TEMPLATE) as f:
             self._template = f.read()
         self.codes = []
@@ -103,11 +93,3 @@ class GoCodeCache:
         self.packages.add(package)
 
 
-def run_console():
-    cache = GoCodeCache()
-    while True:
-        cache.run(single_line_input())
-
-
-if __name__ == "__main__":
-    run_console()

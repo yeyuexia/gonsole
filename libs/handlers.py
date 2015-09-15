@@ -1,5 +1,6 @@
 # coding: utf8
-import utils
+
+from . import utils
 
 
 class PackageHandler:
