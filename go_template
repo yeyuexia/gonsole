@@ -1,0 +1,11 @@
+package main
+
+import (
+{%import_area%}
+)
+
+{%func_area%}
+
+func main() {
+    {%code_area%}
+}
