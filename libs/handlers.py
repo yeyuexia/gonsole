@@ -1,4 +1,5 @@
 # coding: utf8
+import re
 
 from . import utils
 
@@ -63,16 +64,46 @@ class FunctionHandler:
 
 class CodeHandler:
 
-    CODE_TEMPLATE = "{%code_area%}"
+    CODE_TEMPLATE = '{%code_area%}'
+
+    IS_ASSIGNMENT_RE = re.compile('.*(\w|:| )=(^=)*')
 
     def __init__(self):
         self.codes = list()
+        self.unusd_assignments = dict()
 
     def add(self, code):
         self.codes.append(code)
+        if self.is_assignment(code):
+            self.unused_assignments.update(
+                self._get_varis(code, self.codes.index(code))
+            )
+        self._check_use_assignment(code)
+
+    def _get_varis(self, code, index):
+        return [(_code.split('=').strip(), index) for
+                _code in utils.parse_code(code) if self.is_assignment(_code)]
+
+    def _check_use_assignment(self, code):
+        for _code in utils.parse_code(code):
+            used_vars = [
+                vari for vari in self.unused_assignments if
+                self._used_assignment(vari, _code)
+            ]
+            utils.batch_remove(self.used_assignments, used_vars)
+
+    def _used_assignment(self, vari, code):
+        return code.find(vari) == 0
 
     def inflate(self, template):
         return template.replace(self.CODE_TEMPLATE, self._parse_code())
 
+    def is_assignment(self, code):
+        return self.IS_ASSIGNMENT_RE.match(code)
+
     def _parse_code(self):
-        return "\n".join(self.codes)
+        return "\n".join(
+            [code for code in self.codes if
+                self.codes.index(code) not in
+                self.unused_assignments.values()]
+        )

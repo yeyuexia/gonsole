@@ -18,6 +18,10 @@ def continue_input():
 def filter_real_codes(codes):
     return [code for code in codes if code and not code.startswith('"')]
 
+def batch_remove(collection, targets):
+    for target in targets:
+        del collection[target]
+
 
 def parse_code(code):
     def parse_code_with_symbols(code, symbols):

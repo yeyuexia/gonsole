@@ -1,16 +1,11 @@
 package main
 
 import (
-
+    "fmt"
 )
 
 
 
 func main() {
-    a := "aa"
-
-
-
-
-
+    fmt.Println(a)
 }
