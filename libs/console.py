@@ -25,6 +25,9 @@ class GoCodeCache:
         self.custom_funcs = FunctionHandler()
 
     def run(self, command):
+        command and self._parse_input(command)
+
+    def _parse_input(self, command):
         if command == "exit":
             sys.exit(0)
         elif command.startswith("import "):

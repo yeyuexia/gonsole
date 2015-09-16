@@ -35,6 +35,13 @@ class TestGoCodeCache(unittest.TestCase):
         self.assertEqual(len(cache.packages), 1)
         self.assertEqual(list(cache.packages.packages)[0], '"fmt"')
 
+    def test_cache_nothing_if_give_empty_str(self):
+        cache = GoCodeCache('')
+
+        cache.run('')
+
+        self.assertEqual(len(cache.codes.codes), 0)
+
 
 if __name__ == '__main__':
     unittest.main()
