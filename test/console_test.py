@@ -3,14 +3,14 @@
 import unittest
 from unittest import mock
 
-from libs.console import GoCodeCache
+from libs.console import Console
 
 
-class TestGoCodeCache(unittest.TestCase):
+class TestConsole(unittest.TestCase):
 
     @mock.patch('sys.exit')
     def test_invoke_sys_exit_when_given_code_exit(self, mock_exit):
-        cache = GoCodeCache('')
+        cache = Console('')
 
         cache.run('exit')
 
@@ -18,7 +18,7 @@ class TestGoCodeCache(unittest.TestCase):
 
     def test_cache_import_code_with_single_import(self):
         code = 'import "yyx"'
-        cache = GoCodeCache('')
+        cache = Console('')
 
         cache.run(code)
 
@@ -27,7 +27,7 @@ class TestGoCodeCache(unittest.TestCase):
 
     def test_could_not_import_same_package_multi_times(self):
         code = 'import "fmt"'
-        cache = GoCodeCache('')
+        cache = Console('')
 
         cache.run(code)
         cache.run(code)
@@ -36,7 +36,7 @@ class TestGoCodeCache(unittest.TestCase):
         self.assertEqual(list(cache.packages.packages)[0], '"fmt"')
 
     def test_cache_nothing_if_give_empty_str(self):
-        cache = GoCodeCache('')
+        cache = Console('')
 
         cache.run('')
 

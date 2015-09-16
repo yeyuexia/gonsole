@@ -10,7 +10,7 @@ from .handlers import FunctionHandler
 from .handlers import CodeHandler
 
 
-class GoCodeCache:
+class Console:
 
     def __init__(self, path):
         self.GO_CODE_TEMPLATE = os.path.join(path, 'go_template')
