@@ -70,7 +70,7 @@ class CodeHandler:
 
     def __init__(self):
         self.codes = list()
-        self.unusd_assignments = dict()
+        self.unused_assignments = dict()
 
     def add(self, code):
         self.codes.append(code)
