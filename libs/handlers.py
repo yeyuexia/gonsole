@@ -42,3 +42,37 @@ class PackageHandler:
 
     def _format(self, package):
         return utils.STANDARD_SPACE + package
+
+
+class FunctionHandler:
+
+    FUNC_TEMPLATE = "{%func_area%}"
+
+    def __init__(self):
+        self.funcs = list()
+
+    def add(self, func):
+        self.funcs.append(func)
+
+    def inflate(self, template):
+        return template.replace(self.FUNC_TEMPLATE, self._parse_func())
+
+    def _parse_func(self):
+        return "\n".join(["\n" + func for func in self.funcs])
+
+
+class CodeHandler:
+
+    CODE_TEMPLATE = "{%code_area%}"
+
+    def __init__(self):
+        self.codes = list()
+
+    def add(self, code):
+        self.codes.append(code)
+
+    def inflate(self, template):
+        return template.replace(self.CODE_TEMPLATE, self._parse_code())
+
+    def _parse_code(self):
+        return "\n".join(self.codes)

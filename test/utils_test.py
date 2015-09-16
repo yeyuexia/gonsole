@@ -2,7 +2,7 @@
 
 import unittest
 
-from utils import parse_code
+from libs.utils import parse_code
 
 
 class TestUtils(unittest.TestCase):

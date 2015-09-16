@@ -1,7 +1,7 @@
 # coding: utf8
 import unittest
 
-from handlers import PackageHandler
+from libs.handlers import PackageHandler
 
 
 class TestPackageHandler(unittest.TestCase):

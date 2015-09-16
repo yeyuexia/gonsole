@@ -4,12 +4,13 @@ import os
 import sys
 import subprocess
 
+from .utils import continue_input
 from .handlers import PackageHandler
+from .handlers import FunctionHandler
+from .handlers import CodeHandler
 
 
 class GoCodeCache:
-    CODE_TEMPLATE = "{%code_area%}"
-    FUNC_TEMPLATE = "{%func_area%}"
 
     def __init__(self, path):
         self.GO_CODE_TEMPLATE = os.path.join(path, 'go_template')
@@ -19,9 +20,9 @@ class GoCodeCache:
 
         with open(self.GO_CODE_TEMPLATE) as f:
             self._template = f.read()
-        self.codes = []
+        self.codes = CodeHandler()
         self.packages = PackageHandler()
-        self.custom_funcs = []
+        self.custom_funcs = FunctionHandler()
 
     def run(self, command):
         if command == "exit":
@@ -34,24 +35,12 @@ class GoCodeCache:
             self.cache_code(command)
             self.execute()
 
-    def inflate_func(self, template=None):
-        template = template or self._template
-        return template.replace(self.FUNC_TEMPLATE, self._parse_func())
-
-    def inflate_code(self, template=None):
-        template = template or self._template
-        return template.replace(self.CODE_TEMPLATE, self._parse_code())
-
-    def _parse_func(self):
-        return "\n".join(["\n" + func for func in self.custom_funcs])
-
-    def _parse_code(self):
-        return "\n".join(self.codes)
-
     def execute(self):
         with open(self.CACHE_FILE_PATH, "w") as f:
             f.write(self.packages.inflate(
-                self.inflate_func(self.inflate_code())
+                self.custom_funcs.inflate(
+                    self.codes.inflate(self._template)
+                )
             ))
         self._execute()
 
@@ -75,7 +64,7 @@ class GoCodeCache:
 
     def cache_code(self, code):
         self.packages.scan_used_package(code)
-        self.codes.append(code)
+        self.codes.add(code)
 
     def cache_func(self, code):
         pass
