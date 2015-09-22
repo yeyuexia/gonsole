@@ -5,6 +5,7 @@ import sys
 import subprocess
 
 from .utils import continue_input
+from .utils import single_line_input
 from .handlers import PackageHandler
 from .handlers import FunctionHandler
 from .handlers import CodeHandler
@@ -24,18 +25,21 @@ class Console:
         self.packages = PackageHandler()
         self.custom_funcs = FunctionHandler()
 
-    def run(self, command):
-        command and self._parse_input(command)
+    def run(self):
+        while True:
+            self._parse_input(single_line_input())
 
-    def _parse_input(self, command):
-        if command == "exit":
+    def _parse_input(self, text):
+        if not text:
+            return
+        if text == "exit":
             sys.exit(0)
-        elif command.startswith("import "):
-            self.cache_packages(command)
-        elif command.startswith("func "):
-            self.cache_func(command)
+        elif text.startswith("import "):
+            self.cache_packages(text)
+        elif text.startswith("func "):
+            self.cache_func(text)
         else:
-            self.cache_code(command)
+            self.cache_code(d)
             self.execute()
 
     def execute(self):
@@ -83,5 +87,3 @@ class Console:
     def _cache_import(self, code):
         package = code.split(" ", 1)[-1].strip(' ,')
         self.packages.add(package)
-
-
