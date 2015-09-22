@@ -39,7 +39,7 @@ class Console:
         elif text.startswith("func "):
             self.cache_func(text)
         else:
-            self.cache_code(d)
+            self.cache_code(text)
             self.execute()
 
     def execute(self):
