@@ -24,8 +24,8 @@ class PackageHandler:
     def inflate(self, template):
         return template.replace(self.IMPORT_TEMPLATE, self._parse_packages())
 
-    def scan_used_package(self, code):
-        for _code in utils.parse_code(code):
+    def scan_used_package(self, block):
+        for _code in utils.parse_block(block):
             self.used_packages.update(
                 package for package in self.packages if self._used_package(
                     package, _code
@@ -69,28 +69,54 @@ class CodeHandler:
     IS_ASSIGNMENT_RE = re.compile('.*(\w|:| )=(^=)*')
 
     def __init__(self):
-        self.codes = list()
-        self.unused_assignments = dict()
+        self.blocks = dict()
+        self.auto_increment = 0
+        self.varis = dict()
+        self.assignments = dict()
 
-    def add(self, code):
-        self.codes.append(code)
-        if self.is_assignment(code):
-            self.unused_assignments.update(
-                self._get_varis(code, self.codes.index(code))
-            )
-        self._check_use_assignment(code)
+    def _get_and_increment_index(self):
+        index = self.auto_increment
+        self.auto_increment += 1
 
-    def _get_varis(self, code, index):
-        return [(_code.split('=').strip(), index) for
-                _code in utils.parse_code(code) if self.is_assignment(_code)]
+        return index
 
-    def _check_use_assignment(self, code):
-        for _code in utils.parse_code(code):
-            used_vars = [
-                vari for vari in self.unused_assignments if
-                self._used_assignment(vari, _code)
+    def add(self, block):
+        index = self._get_and_increment_index()
+        self.blocks[index] = block
+
+        if self.is_assignment_block(block):
+            self._store_assignments(index, block)
+        else:
+            self._scan_used_assignments(index, block)
+
+    def remove_last_code(self):
+        index = max(self.blocks)
+        self._remove_assignment(index)
+        del self.blocks[index]
+
+    def _remove_assignment(self, index):
+        [v.remove(index) for k, v in self.assignments.items() if index in v]
+
+    def _store_assignments(self, index, block):
+        varis = self._get_varis(block)
+
+        self.varis.update([(vari, index) for vari in varis])
+        self.assignments.update([(vari, []) for vari in varis])
+
+    def _get_varis(self, block):
+        return [
+            _code.split('=')[0].strip(" :")
+            for _code in utils.parse_block(block)
+            if self._is_assignment(_code)
+        ]
+
+    def _scan_used_assignments(self, index, block):
+        for _code in utils.parse_block(block):
+            [
+                self.assignments[vari].append(index)
+                for vari in self.assignments
+                if self._used_assignment(vari, _code)
             ]
-            utils.batch_remove(self.used_assignments, used_vars)
 
     def _used_assignment(self, vari, code):
         return code.find(vari) == 0
@@ -98,12 +124,27 @@ class CodeHandler:
     def inflate(self, template):
         return template.replace(self.CODE_TEMPLATE, self._parse_code())
 
-    def is_assignment(self, code):
+    def is_assignment_block(self, block):
+        for code in block.get_codes():
+            if self._is_assignment(code):
+                return True
+        return False
+
+    def _is_assignment(self, code):
         return self.IS_ASSIGNMENT_RE.match(code)
 
+    def _deflate_blocks(self):
+        for index, block in self.blocks.items():
+            if self._need_compile(index):
+                yield from block.deflate()
+
     def _parse_code(self):
-        return "\n".join(
-            [code for code in self.codes if
-                self.codes.index(code) not in
-                self.unused_assignments.values()]
-        )
+        return "\n".join(list(self._deflate_blocks()))
+
+    def _need_compile(self, index):
+        if index not in self.varis.values():
+            return True
+        for vari, _index in self.varis.items():
+            if _index == index and len(self.assignments[vari]) > 0:
+                return True
+        return False

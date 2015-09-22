@@ -7,5 +7,6 @@ import (
 
 
 func main() {
-    fmt.Println(a)
+    a := 1
+fmt.Println(a)
 }

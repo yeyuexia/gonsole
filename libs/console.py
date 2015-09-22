@@ -4,6 +4,7 @@ import os
 import sys
 import subprocess
 
+from .block import Block
 from .utils import continue_input
 from .utils import single_line_input
 from .handlers import PackageHandler
@@ -39,7 +40,7 @@ class Console:
         elif text.startswith("func "):
             self.cache_func(text)
         else:
-            self.cache_code(text)
+            self.parse_code(text)
             self.execute()
 
     def execute(self):
@@ -69,12 +70,44 @@ class Console:
         if out:
             print(out.decode("utf8").rstrip())
 
-    def cache_code(self, code):
-        self.packages.scan_used_package(code)
-        self.codes.add(code)
+    def parse_code(self, code):
+        block = self.wrap(code)
+        self.packages.scan_used_package(block)
+        self.codes.add(block)
+
+    def wrap(self, code, iter_count=1):
+        block = Block(code)
+        if code.strip().endswith("{"):
+            code = continue_input(iter_count)
+            while not code.endswith("}"):
+                block.append(self.wrap(code, iter_count + 1))
+                code = continue_input(iter_count)
+            block.append(code)
+        return block
 
     def cache_func(self, code):
         pass
+
+    def _filter_real_codes(self, codes):
+        return [code for code in codes if code and not code.startswith('"')]
+
+    def parse_block(self, block):
+        def parse_code_with_symbols(code, symbols):
+            if len(symbols) <= 0:
+                return [code]
+            codes = []
+            for c in code.split(symbols[0]):
+                codes.extend(
+                    parse_code_with_symbols(c.strip(')'), symbols[1:])
+                )
+            return codes
+
+        SPLIT_SYMBOL = [',', ';', '(']
+        codes = []
+        for code in block.get_codes():
+            codes.extend(parse_code_with_symbols(code, SPLIT_SYMBOL))
+
+        return self._filter_real_codes(codes)
 
     def cache_packages(self, code):
         if code.endswith("("):
