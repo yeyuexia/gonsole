@@ -89,7 +89,7 @@ class CodeHandler:
         else:
             self._scan_used_assignments(index, block)
 
-    def remove_last_code(self):
+    def rollback(self):
         index = max(self.blocks)
         self._remove_assignment(index)
         del self.blocks[index]

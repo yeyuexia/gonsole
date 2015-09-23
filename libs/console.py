@@ -67,6 +67,7 @@ class Console:
             err = err.decode("utf8").split("\n")
             print(err[0])
             print(err[1].split(":", 1)[-1])
+            self.codes.rollback()
         if out:
             print(out.decode("utf8").rstrip())
 
