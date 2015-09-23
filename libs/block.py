@@ -18,10 +18,15 @@ class Block:
         return STANDARD_SPACE * indent + code
 
     def get_codes(self):
-        return self.codes
+        for code in self.codes:
+            if isinstance(code, Block):
+                yield from code.get_codes()
+            else:
+                yield code
 
     def deflate(self, indent=0):
         for code in self.codes:
             if isinstance(code, Block):
                 yield from code.deflate(indent+1)
-            yield self.inflate_space(code, indent)
+            else:
+                yield self.inflate_space(code, indent)

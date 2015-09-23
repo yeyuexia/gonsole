@@ -34,6 +34,17 @@ class TestPackageHandler(unittest.TestCase):
 
         self.assertEqual(result, True)
 
+    def test_scan_used_package_when_block_is_condition_code(self):
+        handler = PackageHandler()
+        handler.packages = set(['"com.yyx.console"'])
+        block = Block("if a == 1 {")
+        block.append(Block("console.Find().get()"))
+        block.append("}")
+
+        handler.scan_used_package(block)
+
+        self.assertEqual(len(handler.used_packages), 1)
+
 
 class TestCodeHandler(unittest.TestCase):
     def test_success_check_is_assignment(self):
