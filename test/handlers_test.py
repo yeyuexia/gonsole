@@ -9,7 +9,7 @@ from libs.block import Block
 class TestPackageHandler(unittest.TestCase):
     def test_return_true_when_simple_use_builtin_package(self):
         handler = PackageHandler()
-        package = '"fmt"'
+        package = 'fmt'
         code = 'fmt.Println("abc")'
 
         result = handler._used_package(package, code)
@@ -18,7 +18,7 @@ class TestPackageHandler(unittest.TestCase):
 
     def test_return_true_when_use_third_package(self):
         handler = PackageHandler()
-        package = '"com.yyx.console"'
+        package = 'com.yyx.console'
         code = "console.Find()"
 
         result = handler._used_package(package, code)
@@ -27,7 +27,7 @@ class TestPackageHandler(unittest.TestCase):
 
     def test_return_true_when_use_functional_method(self):
         handler = PackageHandler()
-        package = '"com.yyx.console"'
+        package = 'com.yyx.console'
         code = "console.Find().get()"
 
         result = handler._used_package(package, code)
@@ -36,7 +36,7 @@ class TestPackageHandler(unittest.TestCase):
 
     def test_scan_used_package_when_block_is_condition_code(self):
         handler = PackageHandler()
-        handler.packages = set(['"com.yyx.console"'])
+        handler.packages = set(['com.yyx.console'])
         block = Block("if a == 1 {")
         block.append(Block("console.Find().get()"))
         block.append("}")

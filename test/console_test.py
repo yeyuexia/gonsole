@@ -23,8 +23,8 @@ class TestConsole(unittest.TestCase):
 
         console._parse_input(code)
 
-        self.assertEqual(len(console.packages), 1)
-        self.assertEqual(list(console.packages.packages)[0], '"yyx"')
+        self.assertEqual(len(console.packages), 2)
+        self.assertEqual(list(console.packages.packages)[1], 'yyx')
 
     def test_could_not_import_same_package_multi_times(self):
         code = 'import "fmt"'
@@ -34,7 +34,7 @@ class TestConsole(unittest.TestCase):
         console._parse_input(code)
 
         self.assertEqual(len(console.packages), 1)
-        self.assertEqual(list(console.packages.packages)[0], '"fmt"')
+        self.assertEqual(list(console.packages.packages)[0], 'fmt')
 
     def test_console_nothing_if_give_empty_str(self):
         console = Console('')

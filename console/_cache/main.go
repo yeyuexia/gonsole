@@ -8,5 +8,6 @@ import (
 
 func main() {
     a := 1
-fmt.Println(a)
+fmt.Println(1)
+a > 1
 }

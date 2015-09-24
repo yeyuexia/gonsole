@@ -12,8 +12,13 @@ class PackageHandler:
         self.packages = set()
         self.used_packages = set()
 
+        self._add_default_packages()
+
+    def _add_default_packages(self):
+        self.packages.add('fmt')
+
     def add(self, package):
-        self.packages.add(package)
+        self.packages.add(package.strip('"'))
 
     def __len__(self):
         return len(self.packages)
@@ -33,7 +38,7 @@ class PackageHandler:
             )
 
     def _used_package(self, package, code):
-        package = package.strip('"').split('.')[-1]
+        package = package.split('.')[-1]
         return code.find(package) == 0
 
     def _parse_packages(self):
@@ -42,7 +47,7 @@ class PackageHandler:
         )
 
     def _format(self, package):
-        return utils.STANDARD_SPACE + package
+        return utils.STANDARD_SPACE + '"' + package + '"'
 
 
 class FunctionHandler:
