@@ -53,27 +53,36 @@ class PackageHandler:
 class FunctionHandler:
 
     FUNC_TEMPLATE = "{%func_area%}"
+    METHOD_NAME_RE = re.compile("func (?P<method_name>\w+)\(")
 
     def __init__(self):
-        self.funcs = list()
+        self.methods = dict()
+        self.used_methods = set()
 
-    def add(self, func):
-        self.funcs.append(func)
+    def add(self, method):
+        method_name = self._get_method_name(method)
+        self.methods[method_name] = method
+
+    def _get_method_name(self, method):
+        return self.METHOD_NAME_RE.search(method.codes[0]).group("method_name")
 
     def inflate(self, template):
-        return template.replace(self.FUNC_TEMPLATE, self._parse_func())
+        return template.replace(self.FUNC_TEMPLATE, self._parse_method())
 
-    def _parse_func(self):
-        return "\n".join(["\n" + func for func in self.funcs])
+    def _parse_method(self):
+        return "\n".join(["\n" + method for method in self.methods])
 
-    def scan_used_package(self, block):
-        pass
-        #for _code in utils.parse_block(block):
-        #    self.used_packages.update(
-        #        package for package in self.packages if self._used_package(
-        #            package, _code
-        #        )
-        #    )
+    def scan_used_method(self, block):
+        for code in utils.parse_block(block):
+            self.used_methods.update(
+                method for method in self.methods if self._used_method(
+                    method, code
+                )
+            )
+
+    def _used_method(self, method, code):
+        return code.find(method) == 0
+
 
 
 class CodeHandler:

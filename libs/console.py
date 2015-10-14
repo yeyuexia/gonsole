@@ -24,7 +24,7 @@ class Console:
             self._template = f.read()
         self.codes = CodeHandler()
         self.packages = PackageHandler()
-        self.custom_funcs = FunctionHandler()
+        self.custom_methods = FunctionHandler()
 
     def run(self):
         while True:
@@ -46,7 +46,7 @@ class Console:
     def execute(self):
         with open(self.CACHE_FILE_PATH, "w") as f:
             f.write(self.packages.inflate(
-                self.custom_funcs.inflate(
+                self.custom_methods.inflate(
                     self.codes.inflate(self._template)
                 )
             ))
@@ -73,7 +73,7 @@ class Console:
 
     def cache_code(self, code):
         block = self._parse_code(code)
-        self.custom_funcs.scan_used_package(block)
+        self.custom_methods.scan_used_method(block)
         self.codes.add(block)
 
     def wrap(self, code, iter_count=1):
@@ -93,7 +93,7 @@ class Console:
         return block
 
     def cache_func(self, code):
-        self.custom_funcs.add(self._parse_code(code))
+        self.custom_methods.add(self._parse_code(code))
 
     def _filter_real_codes(self, codes):
         return [code for code in codes if code and not code.startswith('"')]

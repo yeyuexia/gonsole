@@ -18,7 +18,7 @@ def filter_real_codes(codes):
 def parse_block(block):
     def parse_code_with_symbols(code, symbols):
         if len(symbols) <= 0:
-            return [code]
+            return [code.strip()]
         codes = []
         for c in code.split(symbols[0]):
             codes.extend(
@@ -26,7 +26,7 @@ def parse_block(block):
             )
         return codes
 
-    SPLIT_SYMBOL = [',', ';', '(']
+    SPLIT_SYMBOL = [',', ';', '(', '=', '+', '-', '*', '/']
     codes = []
     for code in block.get_codes():
         codes.extend(parse_code_with_symbols(code, SPLIT_SYMBOL))
