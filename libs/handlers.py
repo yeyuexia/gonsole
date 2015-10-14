@@ -70,7 +70,10 @@ class FunctionHandler:
         return template.replace(self.FUNC_TEMPLATE, self._parse_method())
 
     def _parse_method(self):
-        return "\n".join(["\n" + method for method in self.methods])
+        return "\n".join(
+            ["\n" + self.methods[method_name] for method_name in self.methods
+                if method_name in self.used_methods]
+        )
 
     def scan_used_method(self, block):
         for code in utils.parse_block(block):
