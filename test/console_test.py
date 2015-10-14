@@ -24,7 +24,7 @@ class TestConsole(unittest.TestCase):
         console._parse_input(code)
 
         self.assertEqual(len(console.packages), 2)
-        self.assertEqual(list(console.packages.packages)[1], 'yyx')
+        self.assertEqual("yyx" in console.packages.packages, True)
 
     def test_could_not_import_same_package_multi_times(self):
         code = 'import "fmt"'
@@ -70,6 +70,15 @@ class TestConsole(unittest.TestCase):
         self.assertEqual(len(result), 1)
         self.assertEqual(result[0].startswith('get'), True)
 
+    def test_handle_function_when_code_was_start_with_func(
+            self):
+        console = Console("")
+        console.cache_func = mock.MagicMock()
+        code = "func test():"
+
+        console._parse_input(code)
+
+        console.cache_func.assert_called_once_with(code)
 
 if __name__ == '__main__':
     unittest.main()

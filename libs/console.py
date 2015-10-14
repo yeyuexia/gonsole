@@ -40,7 +40,7 @@ class Console:
         elif text.startswith("func "):
             self.cache_func(text)
         else:
-            self.parse_code(text)
+            self.cache_code(text)
             self.execute()
 
     def execute(self):
@@ -71,9 +71,9 @@ class Console:
         if out:
             print(out.decode("utf8").rstrip())
 
-    def parse_code(self, code):
-        block = self.wrap(code)
-        self.packages.scan_used_package(block)
+    def cache_code(self, code):
+        block = self._parse_code(code)
+        self.custom_funcs.scan_used_package(block)
         self.codes.add(block)
 
     def wrap(self, code, iter_count=1):
@@ -86,8 +86,14 @@ class Console:
             block.append(code)
         return block
 
+    def _parse_code(self, code):
+        block = self.wrap(code)
+        self.packages.scan_used_package(block)
+
+        return block
+
     def cache_func(self, code):
-        pass
+        self.custom_funcs.add(self._parse_code(code))
 
     def _filter_real_codes(self, codes):
         return [code for code in codes if code and not code.startswith('"')]

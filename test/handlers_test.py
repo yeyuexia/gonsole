@@ -1,8 +1,9 @@
 # coding: utf8
 import unittest
 
-from libs.handlers import PackageHandler
 from libs.handlers import CodeHandler
+from libs.handlers import PackageHandler
+from libs.handlers import FunctionHandler
 from libs.block import Block
 
 
@@ -44,6 +45,14 @@ class TestPackageHandler(unittest.TestCase):
         handler.scan_used_package(block)
 
         self.assertEqual(len(handler.used_packages), 1)
+
+
+class TestFuncHandler(unittest.TestCase):
+    def test_success_add_block(self):
+        handler = FunctionHandler()
+        handler.add(Block(""))
+
+        self.assertEqual(len(handler.funcs), 1)
 
 
 class TestCodeHandler(unittest.TestCase):

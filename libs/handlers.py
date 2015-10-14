@@ -66,6 +66,15 @@ class FunctionHandler:
     def _parse_func(self):
         return "\n".join(["\n" + func for func in self.funcs])
 
+    def scan_used_package(self, block):
+        pass
+        #for _code in utils.parse_block(block):
+        #    self.used_packages.update(
+        #        package for package in self.packages if self._used_package(
+        #            package, _code
+        #        )
+        #    )
+
 
 class CodeHandler:
 
