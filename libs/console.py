@@ -60,14 +60,20 @@ class Console:
             stdin=subprocess.PIPE
         ).communicate()
 
-        self.parse_output(out, err)
+        self._parse_output(out, err)
 
-    def parse_output(self, out, err):
+    def _parse_err_message(self, err):
+        err = err.decode("utf8").split("\n")
+        print(err[0])
+        print(err[1].split(":", 1)[-1])
+
+    def _rollback(self):
+        self.codes.rollback()
+
+    def _parse_output(self, out, err):
         if err:
-            err = err.decode("utf8").split("\n")
-            print(err[0])
-            print(err[1].split(":", 1)[-1])
-            self.codes.rollback()
+            self._parse_err_message(err)
+            self._rollback()
         if out:
             print(out.decode("utf8").rstrip())
 
