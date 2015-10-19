@@ -42,7 +42,7 @@ class TestPackageHandler(unittest.TestCase):
         block.append(Block("console.Find().get()"))
         block.append("}")
 
-        handler.scan_used_package(block)
+        handler.scan_used_package([block])
 
         self.assertEqual(len(handler.used_packages), 1)
 
@@ -58,14 +58,14 @@ class TestFuncHandler(unittest.TestCase):
         handler = FunctionHandler()
         handler.add(Block("func Str2int(sint string) {"))
 
-        self.assertTrue("Str2int" in handler.methods)
+        self.assertTrue("Str2int" in handler._methods)
 
     def test_should_find_used_method(self):
         handler = FunctionHandler()
-        handler.methods["Str2int"] = Block("func Str2int(sint string) {")
+        handler._methods["Str2int"] = Block("func Str2int(sint string) {")
 
         code = Block('fmt.Println("test" + Str2int("5"))')
-        handler.scan_used_method(code)
+        handler.scan_used_method([code])
 
         self.assertTrue("Str2int" in handler.used_methods)
 

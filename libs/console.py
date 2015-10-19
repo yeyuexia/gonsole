@@ -44,6 +44,10 @@ class Console:
             self.execute()
 
     def execute(self):
+        self.custom_methods.scan_used_method(self.codes.blocks)
+        self.packages.scan_used_package(
+            self.codes.blocks + self.custom_methods.methods
+        )
         with open(self.CACHE_FILE_PATH, "w") as f:
             f.write(self.packages.inflate(
                 self.custom_methods.inflate(
@@ -78,9 +82,7 @@ class Console:
             print(out.decode("utf8").rstrip())
 
     def cache_code(self, code):
-        block = self._parse_code(code)
-        self.custom_methods.scan_used_method(block)
-        self.codes.add(block)
+        self.codes.add(self.wrap(code))
 
     def wrap(self, code, iter_count=1):
         block = Block(code)
@@ -92,14 +94,8 @@ class Console:
             block.append(code)
         return block
 
-    def _parse_code(self, code):
-        block = self.wrap(code)
-        self.packages.scan_used_package(block)
-
-        return block
-
     def cache_func(self, code):
-        self.custom_methods.add(self._parse_code(code))
+        self.custom_methods.add(self.wrap(code))
 
     def _filter_real_codes(self, codes):
         return [code for code in codes if code and not code.startswith('"')]

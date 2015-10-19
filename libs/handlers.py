@@ -4,6 +4,11 @@ import re
 from . import utils
 
 
+def scan(block, packages, used, check_used):
+    for code in utils.parse_block(block):
+        used.update(name for name in packages if check_used(name, code))
+
+
 class PackageHandler:
 
     IMPORT_TEMPLATE = "{%import_area%}"
@@ -29,13 +34,9 @@ class PackageHandler:
     def inflate(self, template):
         return template.replace(self.IMPORT_TEMPLATE, self._parse_packages())
 
-    def scan_used_package(self, block):
-        for _code in utils.parse_block(block):
-            self.used_packages.update(
-                package for package in self.packages if self._used_package(
-                    package, _code
-                )
-            )
+    def scan_used_package(self, blocks):
+        for block in blocks:
+            scan(block, self.packages, self.used_packages, self._used_package)
 
     def _used_package(self, package, code):
         package = package.split('.')[-1]
@@ -56,12 +57,17 @@ class FunctionHandler:
     METHOD_NAME_RE = re.compile("func (?P<method_name>\w+)\(")
 
     def __init__(self):
-        self.methods = dict()
+        self._methods = dict()
         self.used_methods = set()
+
+    @property
+    def methods(self):
+        return list(self._methods.values())
 
     def add(self, method):
         method_name = self._get_method_name(method)
-        self.methods[method_name] = method
+        self._methods[method_name] = method
+        scan(method, self._methods, self.used_methods, self._used_method)
 
     def _get_method_name(self, method):
         return self.METHOD_NAME_RE.search(method.codes[0]).group("method_name")
@@ -76,17 +82,13 @@ class FunctionHandler:
         return "\n".join(list(method.deflate()))
 
     def _assemble(self):
-        for name, method in self.methods.items():
+        for name, method in self._methods.items():
             if name in self.used_methods:
                 yield self._assemble_method(method)
 
-    def scan_used_method(self, block):
-        for code in utils.parse_block(block):
-            self.used_methods.update(
-                method for method in self.methods if self._used_method(
-                    method, code
-                )
-            )
+    def scan_used_method(self, blocks):
+        for block in blocks:
+            scan(block, self._methods, self.used_methods, self._used_method)
 
     def _used_method(self, method, code):
         return code.find(method) == 0
@@ -99,10 +101,14 @@ class CodeHandler:
     IS_ASSIGNMENT_RE = re.compile('.*(\w|:| )=(^=)*')
 
     def __init__(self):
-        self.blocks = dict()
+        self._blocks = dict()
         self.auto_increment = 0
         self.varis = dict()
         self.assignments = dict()
+
+    @property
+    def blocks(self):
+        return list(self._blocks.values())
 
     def _get_and_increment_index(self):
         index = self.auto_increment
@@ -112,7 +118,7 @@ class CodeHandler:
 
     def add(self, block):
         index = self._get_and_increment_index()
-        self.blocks[index] = block
+        self._blocks[index] = block
 
         if self.is_assignment_block(block):
             self._store_assignments(index, block)
@@ -120,9 +126,9 @@ class CodeHandler:
             self._scan_used_assignments(index, block)
 
     def rollback(self):
-        index = max(self.blocks)
+        index = max(self._blocks)
         self._remove_assignment(index)
-        del self.blocks[index]
+        del self._blocks[index]
 
     def _remove_assignment(self, index):
         [v.remove(index) for k, v in self.assignments.items() if index in v]
@@ -164,7 +170,7 @@ class CodeHandler:
         return self.IS_ASSIGNMENT_RE.match(code)
 
     def _deflate_blocks(self):
-        for index, block in self.blocks.items():
+        for index, block in self._blocks.items():
             if self._need_compile(index):
                 yield from block.deflate()
 
