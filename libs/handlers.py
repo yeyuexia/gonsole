@@ -4,93 +4,103 @@ import re
 from . import utils
 
 
-def scan(block, packages, used, check_used):
-    for code in utils.parse_block(block):
-        used.update(name for name in packages if check_used(name, code))
+class Handler:
+
+    def __init__(self, template):
+        self.template = template
+        self.assignments = set()
+        self.codes = dict()
+
+    def scan(self, block):
+        for code in utils.parse_block(block):
+            self.assignments.update(
+                name for name in self.codes if self.is_assigned(name, code)
+            )
+
+    def add(self, codes):
+        raise NotImplementedError()
+
+    def scan_used(self, blocks):
+        self.assignments.clear()
+        for block in blocks:
+            self.scan(block)
+
+    def is_assigned(self, name, code):
+        raise NotImplementedError()
+
+    def parse_codes(self):
+        raise NotImplementedError()
+
+    def inflate(self, template):
+        return template.replace(self.template, self.parse_codes())
 
 
-class PackageHandler:
+class PackageHandler(Handler):
 
     IMPORT_TEMPLATE = "{%import_area%}"
 
     def __init__(self):
-        self.packages = set()
-        self.used_packages = set()
+        super(PackageHandler, self).__init__(self.IMPORT_TEMPLATE)
 
         self._add_default_packages()
 
     def _add_default_packages(self):
-        self.packages.add('fmt')
+        self.add('fmt')
 
     def add(self, package):
-        self.packages.add(package.strip('"'))
+        self.codes[(package.strip('"'))] = True
 
     def __len__(self):
-        return len(self.packages)
+        return len(self.codes)
 
     def used_package_length(self):
-        return len(self.used_packages)
+        return len(self.assignments)
 
-    def inflate(self, template):
-        return template.replace(self.IMPORT_TEMPLATE, self._parse_packages())
+    def is_assigned(self, name, code):
+        name = name.split('.')[-1]
+        return code.find(name) == 0
 
-    def scan_used_package(self, blocks):
-        for block in blocks:
-            scan(block, self.packages, self.used_packages, self._used_package)
-
-    def _used_package(self, package, code):
-        package = package.split('.')[-1]
-        return code.find(package) == 0
-
-    def _parse_packages(self):
+    def parse_codes(self):
         return "\n".join(
-            self._format(package) for package in self.used_packages
+            self._format(name) for name in self.assignments
         )
 
     def _format(self, package):
         return utils.STANDARD_SPACE + '"' + package + '"'
 
 
-class FunctionHandler:
+class FunctionHandler(Handler):
 
     FUNC_TEMPLATE = "{%func_area%}"
     METHOD_NAME_RE = re.compile("func (?P<method_name>\w+)\(")
 
     def __init__(self):
-        self._methods = dict()
-        self.used_methods = set()
+        super(FunctionHandler, self).__init__(self.FUNC_TEMPLATE)
 
     @property
     def methods(self):
-        return list(self._methods.values())
+        return list(self.codes.values())
 
     def add(self, method):
         method_name = self._get_method_name(method)
-        self._methods[method_name] = method
-        scan(method, self._methods, self.used_methods, self._used_method)
+        self.codes[method_name] = method
+        self.scan(method)
 
     def _get_method_name(self, method):
         return self.METHOD_NAME_RE.search(method.codes[0]).group("method_name")
 
-    def inflate(self, template):
-        return template.replace(self.FUNC_TEMPLATE, self._parse_method())
-
-    def _parse_method(self):
+    def parse_codes(self):
         return "\n\n".join(list(self._assemble()))
 
     def _assemble_method(self, method):
         return "\n".join(list(method.deflate()))
 
     def _assemble(self):
-        for name, method in self._methods.items():
-            if name in self.used_methods:
+        for name, method in self.codes.items():
+            if name in self.assignments:
                 yield self._assemble_method(method)
 
-    def scan_used_method(self, blocks):
-        for block in blocks:
-            scan(block, self._methods, self.used_methods, self._used_method)
-
-    def _used_method(self, method, code):
+    def is_assigned(self, method, code):
         return code.find(method) == 0
 
 
@@ -108,7 +118,11 @@ class CodeHandler:
 
     @property
     def blocks(self):
-        return list(self._blocks.values())
+        return [
+            block
+            for index, block in self._blocks.items()
+            if self._need_compile(index)
+        ]
 
     def _get_and_increment_index(self):
         index = self.auto_increment
@@ -135,8 +149,8 @@ class CodeHandler:
 
     def _store_assignments(self, index, block):
         varis = self._get_varis(block)
-
         self.varis.update([(vari, index) for vari in varis])
+
         self.assignments.update([(vari, []) for vari in varis])
 
     def _get_varis(self, block):

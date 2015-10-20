@@ -44,8 +44,8 @@ class Console:
             self.execute()
 
     def execute(self):
-        self.custom_methods.scan_used_method(self.codes.blocks)
-        self.packages.scan_used_package(
+        self.custom_methods.scan_used(self.codes.blocks)
+        self.packages.scan_used(
             self.codes.blocks + self.custom_methods.methods
         )
         with open(self.CACHE_FILE_PATH, "w") as f:

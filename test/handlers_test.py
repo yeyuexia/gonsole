@@ -1,6 +1,8 @@
 # coding: utf8
 import unittest
 
+from libs import utils
+
 from libs.handlers import CodeHandler
 from libs.handlers import PackageHandler
 from libs.handlers import FunctionHandler
@@ -13,38 +15,51 @@ class TestPackageHandler(unittest.TestCase):
         package = 'fmt'
         code = 'fmt.Println("abc")'
 
-        result = handler._used_package(package, code)
+        result = handler.is_assigned(package, code)
 
-        self.assertEqual(result, True)
+        self.assertTrue(result)
 
     def test_return_true_when_use_third_package(self):
         handler = PackageHandler()
         package = 'com.yyx.console'
         code = "console.Find()"
 
-        result = handler._used_package(package, code)
+        result = handler.is_assigned(package, code)
 
-        self.assertEqual(result, True)
+        self.assertTrue(result)
 
     def test_return_true_when_use_functional_method(self):
         handler = PackageHandler()
         package = 'com.yyx.console'
         code = "console.Find().get()"
 
-        result = handler._used_package(package, code)
+        result = handler.is_assigned(package, code)
 
-        self.assertEqual(result, True)
+        self.assertTrue(result)
 
     def test_scan_used_package_when_block_is_condition_code(self):
         handler = PackageHandler()
-        handler.packages = set(['com.yyx.console'])
+        handler.codes = {'com.yyx.console': True}
         block = Block("if a == 1 {")
         block.append(Block("console.Find().get()"))
         block.append("}")
 
-        handler.scan_used_package([block])
+        handler.scan_used([block])
 
-        self.assertEqual(len(handler.used_packages), 1)
+        self.assertEqual(len(handler.assignments), 1)
+
+    def test_should_clear_old_package_when_scan_used_package(self):
+        handler = PackageHandler()
+        handler.codes = {'com.yyx.console': 1}
+        handler.assignments = set(["com.yyx.text"])
+        block = Block("if a == 1 {")
+        block.append(Block("console.Find().get()"))
+        block.append("}")
+
+        handler.scan_used([block])
+
+        self.assertEqual(len(handler.assignments), 1)
+        self.assertTrue("com.yyx.text" not in handler.assignments)
 
 
 class TestFuncHandler(unittest.TestCase):
@@ -58,16 +73,27 @@ class TestFuncHandler(unittest.TestCase):
         handler = FunctionHandler()
         handler.add(Block("func Str2int(sint string) {"))
 
-        self.assertTrue("Str2int" in handler._methods)
+        self.assertTrue("Str2int" in handler.codes)
 
     def test_should_find_used_method(self):
         handler = FunctionHandler()
-        handler._methods["Str2int"] = Block("func Str2int(sint string) {")
+        handler.codes["Str2int"] = Block("func Str2int(sint string) {")
 
         code = Block('fmt.Println("test" + Str2int("5"))')
-        handler.scan_used_method([code])
+        handler.scan_used([code])
 
-        self.assertTrue("Str2int" in handler.used_methods)
+        self.assertTrue("Str2int" in handler.assignments)
+
+    def test_should_clear_old_assignment_when_scan_used_method(self):
+        handler = FunctionHandler()
+        handler.codes["Str2int"] = Block("func Str2int(sint string) {")
+        handler.assignments = set(["aaa"])
+
+        code = Block('fmt.Println("test" + Str2int("5"))')
+        handler.scan_used([code])
+
+        self.assertTrue("Str2int" in handler.assignments)
+        self.assertTrue("aaa" not in handler.assignments)
 
 
 class TestCodeHandler(unittest.TestCase):
