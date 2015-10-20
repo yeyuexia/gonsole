@@ -1,8 +1,6 @@
 # coding: utf8
 import unittest
 
-from libs import utils
-
 from libs.handlers import CodeHandler
 from libs.handlers import PackageHandler
 from libs.handlers import FunctionHandler
@@ -97,13 +95,56 @@ class TestFuncHandler(unittest.TestCase):
 
 
 class TestCodeHandler(unittest.TestCase):
+    def test_success_get_assignment_use_key_word_var(self):
+        code = "var a int64"
+        handler = CodeHandler()
+
+        result = handler._is_assignment(code)
+
+        self.assertTrue(result and True)
+
+    def test_success_get_assignment_use_key_word_const(self):
+        code = 'const x string = "hello world"'
+        handler = CodeHandler()
+
+        result = handler._is_assignment(code)
+
+        self.assertTrue(result and True)
+
+    def test_success_get_vari_when_use_key_word_var(self):
+        block = Block("var a int64")
+        handler = CodeHandler()
+
+        varis = handler.get_varis(block)
+
+        self.assertTrue("a" in varis)
+        self.assertTrue(len(varis) == 1)
+
+    def test_success_get_vari_when_use_key_word_const(self):
+        block = Block('const x string = "hello world"')
+        handler = CodeHandler()
+
+        varis = handler.get_varis(block)
+
+        self.assertTrue("x" in varis)
+        self.assertTrue(len(varis) == 1)
+
     def test_success_check_is_assignment(self):
         code = 'a := "123"'
         handler = CodeHandler()
 
         result = handler._is_assignment(code)
 
-        self.assertEqual(result and True, True)
+        self.assertTrue(result and True)
+
+    def test_success_get_vari_when_declear(self):
+        block = Block('a := "123"')
+        handler = CodeHandler()
+
+        varis = list(handler._get_varis(block))
+
+        self.assertTrue("a" in varis)
+        self.assertTrue(len(varis) == 1)
 
     def test_check_is_not_assignment(self):
         code = '1 <= 2'

@@ -22,7 +22,7 @@ def parse_block(block):
         if code.find(symbols[0]) == -1:
             return parse_code_with_symbols(code, symbols[1:])
 
-        codes = []
+        codes = [code]
         for c in code.split(symbols[0]):
             codes.extend(
                 parse_code_with_symbols(c.strip(')'), symbols[1:])
@@ -32,8 +32,6 @@ def parse_block(block):
     SPLIT_SYMBOL = [',', ';', '(', '=', '+', '-', '*', '/']
     codes = []
     for code in block.get_codes():
-        if code.find('=') > 0:
-            codes.append(code)
         codes.extend(parse_code_with_symbols(code, SPLIT_SYMBOL))
 
     return filter_real_codes(codes)

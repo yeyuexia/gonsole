@@ -106,9 +106,10 @@ class FunctionHandler(Handler):
 
 class CodeHandler:
 
-    CODE_TEMPLATE = '{%code_area%}'
+    CODE_TEMPLATE = "{%code_area%}"
 
-    IS_ASSIGNMENT_RE = re.compile('.*(\w|:| )=(^=)*')
+    IS_ASSIGNMENT_RE = re.compile(r"(?P<vari>\w+)[ ]*[:]{0,1}=[^=]+")
+    VARIABLE_DECLARE_RE = re.compile("(var|const) (?P<vari>\w+) ")
 
     def __init__(self):
         self._blocks = dict()
@@ -148,17 +149,19 @@ class CodeHandler:
         [v.remove(index) for k, v in self.assignments.items() if index in v]
 
     def _store_assignments(self, index, block):
-        varis = self._get_varis(block)
+        varis = self.get_varis(block)
         self.varis.update([(vari, index) for vari in varis])
 
         self.assignments.update([(vari, []) for vari in varis])
 
+    def get_varis(self, block):
+        return set(self._get_varis(block))
+
     def _get_varis(self, block):
-        return [
-            _code.split('=')[0].strip(" :")
-            for _code in utils.parse_block(block)
-            if self._is_assignment(_code)
-        ]
+        for code in utils.parse_block(block):
+            result = self._is_assignment(code)
+            if result:
+                yield result.group("vari")
 
     def _scan_used_assignments(self, index, block):
         for _code in utils.parse_block(block):
@@ -181,7 +184,7 @@ class CodeHandler:
         return False
 
     def _is_assignment(self, code):
-        return self.IS_ASSIGNMENT_RE.match(code)
+        return self.VARIABLE_DECLARE_RE.match(code) or self.IS_ASSIGNMENT_RE.match(code)
 
     def _deflate_blocks(self):
         for index, block in self._blocks.items():
