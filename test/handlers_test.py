@@ -15,27 +15,21 @@ class TestAssignmentHandler(unittest.TestCase):
     def test_should_add_assignment(self):
         self.handler.assignments = dict()
 
-        self.handler.add_assignment("x")
+        self.handler.add("x", "aa")
 
         self.assertEquals(len(self.handler.assignments), 1)
         self.assertTrue("x" in self.handler.assignments)
-        self.assertEquals(
-            self.handler.assignments["x"],
-            AssignmentHandler.VARIABLE
-        )
+        self.assertEquals(self.handler.assignments["x"], "aa")
 
     def test_should_override_assignment_when_has_same_name(self):
         self.handler.assignments = dict()
-        self.handler.assignments["x"] = AssignmentHandler.VARIABLE
+        self.handler.assignments["x"] = "aa"
 
-        self.handler.add_method_assignment("x")
+        self.handler.add("x", "bb")
 
         self.assertEquals(len(self.handler.assignments), 1)
         self.assertTrue("x" in self.handler.assignments)
-        self.assertEquals(
-            self.handler.assignments["x"],
-            AssignmentHandler.METHOD
-        )
+        self.assertEquals(self.handler.assignments["x"], "bb")
 
 
 class TestPackageHandler(unittest.TestCase):
@@ -75,20 +69,22 @@ class TestPackageHandler(unittest.TestCase):
 
         handler.scan_used([block])
 
-        self.assertEqual(len(handler.assignments), 1)
+        self.assertEqual(handler.assignments.length(), 1)
 
     def test_should_clear_old_package_when_scan_used_package(self):
         handler = PackageHandler()
         handler.codes = {'com.yyx.console': 1}
-        handler.assignments = set(["com.yyx.text"])
+        handler.assignments.add("com.yyx.text", handler.handler_type)
         block = Block("if a == 1 {")
         block.append(Block("console.Find().get()"))
         block.append("}")
 
         handler.scan_used([block])
 
-        self.assertEqual(len(handler.assignments), 1)
-        self.assertTrue("com.yyx.text" not in handler.assignments)
+        self.assertEqual(handler.assignments.length(), 1)
+        self.assertTrue(
+            "com.yyx.text" not in handler.assignments.get(handler.handler_type)
+        )
 
 
 class TestFuncHandler(unittest.TestCase):
@@ -111,18 +107,24 @@ class TestFuncHandler(unittest.TestCase):
         code = Block('fmt.Println("test" + Str2int("5"))')
         handler.scan_used([code])
 
-        self.assertTrue("Str2int" in handler.assignments)
+        self.assertTrue(
+            "Str2int" in handler.assignments.get(handler.handler_type)
+        )
 
     def test_should_clear_old_assignment_when_scan_used_method(self):
         handler = FunctionHandler()
         handler.codes["Str2int"] = Block("func Str2int(sint string) {")
-        handler.assignments = set(["aaa"])
+        handler.assignments.add("aaa", handler.handler_type)
 
         code = Block('fmt.Println("test" + Str2int("5"))')
         handler.scan_used([code])
 
-        self.assertTrue("Str2int" in handler.assignments)
-        self.assertTrue("aaa" not in handler.assignments)
+        self.assertTrue(
+            "Str2int" in handler.assignments.get(handler.handler_type)
+        )
+        self.assertTrue(
+            "aaa" not in handler.assignments.get(handler.handler_type)
+        )
 
 
 class TestCodeHandler(unittest.TestCase):

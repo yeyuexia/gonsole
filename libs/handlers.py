@@ -7,9 +7,6 @@ from . import utils
 
 
 class AssignmentHandler:
-    VARIABLE = 0
-    METHOD = 1
-    PACKAGE = 2
 
     _instance = None
 
@@ -26,28 +23,34 @@ class AssignmentHandler:
                     cls._instance = AssignmentHandler()
         return cls._instance
 
-    def add_assignment(self, assignment):
-        self.assignments[assignment] = self.VARIABLE
+    def add(self, assignment, assignment_type):
+        self.assignments[assignment] = assignment_type
 
-    def add_method_assignment(self, assignment):
-        self.assignments[assignment] = self.METHOD
+    def get(self, assignment_type):
+        for assignment, _type in self.assignments.items():
+            if _type == assignment_type:
+                yield assignment
 
-    def add_third_assignment(self, assignment):
-        self.assignments[assignment] = self.PACKAGE
+    def clear(self):
+        self.assignments.clear()
+
+    def length(self):
+        return len(self.assignments)
 
 
 class Handler:
 
-    def __init__(self, template):
+    def __init__(self, template, handler_type):
+        self.handler_type = handler_type
         self.template = template
-        self.assignments = set()
+        self.assignments = AssignmentHandler.instance()
         self.codes = dict()
 
     def scan(self, block):
         for code in utils.parse_block(block):
-            self.assignments.update(
-                name for name in self.codes if self.is_assigned(name, code)
-            )
+            for name in self.codes:
+                if self.is_assigned(name, code):
+                    self.assignments.add(name, self.handler_type)
 
     def add(self, codes):
         raise NotImplementedError()
@@ -72,7 +75,7 @@ class PackageHandler(Handler):
     IMPORT_TEMPLATE = "{%import_area%}"
 
     def __init__(self):
-        super(PackageHandler, self).__init__(self.IMPORT_TEMPLATE)
+        super(PackageHandler, self).__init__(self.IMPORT_TEMPLATE, "package")
 
         self._add_default_packages()
 
@@ -86,7 +89,7 @@ class PackageHandler(Handler):
         return len(self.codes)
 
     def used_package_length(self):
-        return len(self.assignments)
+        return self.assignments.length()
 
     def is_assigned(self, name, code):
         name = name.split('.')[-1]
@@ -94,7 +97,8 @@ class PackageHandler(Handler):
 
     def parse_codes(self):
         return "\n".join(
-            self._format(name) for name in self.assignments
+            self._format(name)
+            for name in self.assignments.get(self.handler_type)
         )
 
     def _format(self, package):
@@ -107,7 +111,7 @@ class FunctionHandler(Handler):
     METHOD_NAME_RE = re.compile("func (?P<method_name>\w+)\(")
 
     def __init__(self):
-        super(FunctionHandler, self).__init__(self.FUNC_TEMPLATE)
+        super(FunctionHandler, self).__init__(self.FUNC_TEMPLATE, "method")
 
     @property
     def methods(self):
@@ -129,7 +133,7 @@ class FunctionHandler(Handler):
 
     def _assemble(self):
         for name, method in self.codes.items():
-            if name in self.assignments:
+            if name in self.assignments.get(self.handler_type):
                 yield self._assemble_method(method)
 
     def is_assigned(self, method, code):
