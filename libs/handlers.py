@@ -144,7 +144,7 @@ class CodeHandler:
 
     CODE_TEMPLATE = "{%code_area%}"
 
-    IS_ASSIGNMENT_RE = re.compile(r"(?P<vari>\w+)[ ]*[:]{0,1}=[^=]+")
+    IS_ASSIGNMENT_RE = re.compile(r"(?P<vari>\w+)[ ]*:=[^=]+")
     VARIABLE_DECLARE_RE = re.compile("(var|const) (?P<vari>\w+) ")
 
     def __init__(self):
