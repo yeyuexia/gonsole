@@ -83,7 +83,7 @@ class TestPackageHandler(unittest.TestCase):
 
         self.assertEqual(handler.assignments.length(), 1)
         self.assertTrue(
-            "com.yyx.text" not in handler.assignments.get(handler.handler_type)
+            "com.yyx.text" not in handler.get_assignments()
         )
 
 
@@ -108,7 +108,7 @@ class TestFuncHandler(unittest.TestCase):
         handler.scan_used([code])
 
         self.assertTrue(
-            "Str2int" in handler.assignments.get(handler.handler_type)
+            "Str2int" in handler.get_assignments()
         )
 
     def test_should_clear_old_assignment_when_scan_used_method(self):
@@ -119,12 +119,8 @@ class TestFuncHandler(unittest.TestCase):
         code = Block('fmt.Println("test" + Str2int("5"))')
         handler.scan_used([code])
 
-        self.assertTrue(
-            "Str2int" in handler.assignments.get(handler.handler_type)
-        )
-        self.assertTrue(
-            "aaa" not in handler.assignments.get(handler.handler_type)
-        )
+        self.assertTrue("Str2int" in handler.get_assignments())
+        self.assertTrue("aaa" not in handler.get_assignments())
 
 
 class TestCodeHandler(unittest.TestCase):

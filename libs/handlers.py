@@ -69,6 +69,9 @@ class Handler:
     def inflate(self, template):
         return template.replace(self.template, self.parse_codes())
 
+    def get_assignments(self):
+        return self.assignments.get(self.handler_type)
+
 
 class PackageHandler(Handler):
 
@@ -98,7 +101,7 @@ class PackageHandler(Handler):
     def parse_codes(self):
         return "\n".join(
             self._format(name)
-            for name in self.assignments.get(self.handler_type)
+            for name in self.get_assignments()
         )
 
     def _format(self, package):
@@ -133,7 +136,7 @@ class FunctionHandler(Handler):
 
     def _assemble(self):
         for name, method in self.codes.items():
-            if name in self.assignments.get(self.handler_type):
+            if name in self.get_assignments():
                 yield self._assemble_method(method)
 
     def is_assigned(self, method, code):
