@@ -4,7 +4,38 @@ import unittest
 from libs.handlers import CodeHandler
 from libs.handlers import PackageHandler
 from libs.handlers import FunctionHandler
+from libs.handlers import AssignmentHandler
 from libs.block import Block
+
+
+class TestAssignmentHandler(unittest.TestCase):
+    def setUp(self):
+        self.handler = AssignmentHandler.instance()
+
+    def test_should_add_assignment(self):
+        self.handler.assignments = dict()
+
+        self.handler.add_assignment("x")
+
+        self.assertEquals(len(self.handler.assignments), 1)
+        self.assertTrue("x" in self.handler.assignments)
+        self.assertEquals(
+            self.handler.assignments["x"],
+            AssignmentHandler.VARIABLE
+        )
+
+    def test_should_override_assignment_when_has_same_name(self):
+        self.handler.assignments = dict()
+        self.handler.assignments["x"] = AssignmentHandler.VARIABLE
+
+        self.handler.add_method_assignment("x")
+
+        self.assertEquals(len(self.handler.assignments), 1)
+        self.assertTrue("x" in self.handler.assignments)
+        self.assertEquals(
+            self.handler.assignments["x"],
+            AssignmentHandler.METHOD
+        )
 
 
 class TestPackageHandler(unittest.TestCase):

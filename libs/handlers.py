@@ -1,7 +1,39 @@
 # coding: utf8
+
 import re
+import threading
 
 from . import utils
+
+
+class AssignmentHandler:
+    VARIABLE = 0
+    METHOD = 1
+    PACKAGE = 2
+
+    _instance = None
+
+    _lock = threading.Lock()
+
+    def __init__(self):
+        self.assignments = dict()
+
+    @classmethod
+    def instance(cls):
+        if not cls._instance:
+            with cls._lock:
+                if not cls._instance:
+                    cls._instance = AssignmentHandler()
+        return cls._instance
+
+    def add_assignment(self, assignment):
+        self.assignments[assignment] = self.VARIABLE
+
+    def add_method_assignment(self, assignment):
+        self.assignments[assignment] = self.METHOD
+
+    def add_third_assignment(self, assignment):
+        self.assignments[assignment] = self.PACKAGE
 
 
 class Handler:
