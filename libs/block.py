@@ -11,10 +11,6 @@ class Block:
 
     def __init__(self, code):
         self.codes = [code]
-        self._get_type()
-
-    def _get_type(self):
-        pass
 
     def append(self, code):
         self.codes.append(code)
