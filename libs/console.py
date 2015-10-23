@@ -55,6 +55,7 @@ class Console:
                 )
             ))
         self._execute()
+        self.codes.clear()
 
     def _execute(self):
         out, err = subprocess.Popen(

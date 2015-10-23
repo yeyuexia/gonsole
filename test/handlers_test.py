@@ -70,7 +70,7 @@ class TestPackageHandler(unittest.TestCase):
         handler.scan_used([block])
         self.assertEqual(len(list(handler.get_assignments())), 1)
 
-    def test_should_clear_old_package_when_scan_used_package(self):
+    def test_should_clear_old_package_when_clear_and_scan_used_package(self):
         handler = PackageHandler()
         handler.declared_assignments = {'com.yyx.console': 1}
         handler.assignments.add("com.yyx.text", handler.handler_type)
@@ -78,8 +78,11 @@ class TestPackageHandler(unittest.TestCase):
         block.append(Block("console.Find().get()"))
         block.append("}")
 
+        handler.assignments.clear()
+
         handler.scan_used([block])
 
+        print(set(handler.get_assignments()))
         self.assertEqual(handler.assignments.length(), 1)
         self.assertTrue(
             "com.yyx.text" not in handler.get_assignments()
@@ -112,12 +115,13 @@ class TestFuncHandler(unittest.TestCase):
             "Str2int" in handler.get_assignments()
         )
 
-    def test_should_clear_old_assignment_when_scan_used_method(self):
+    def test_should_clear_old_assignment_when_clear(self):
         handler = FunctionHandler()
         handler.declared_assignments["Str2int"] = Block(
             "func Str2int(sint string) {"
         )
         handler.assignments.add("aaa", handler.handler_type)
+        handler.assignments.clear()
 
         code = Block('fmt.Println("test" + Str2int("5"))')
         handler.scan_used([code])

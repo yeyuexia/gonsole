@@ -56,7 +56,6 @@ class Handler:
         raise NotImplementedError()
 
     def scan_used(self, blocks):
-        self.assignments.clear()
         for block in blocks:
             self.scan(block)
 
@@ -188,8 +187,12 @@ class CodeHandler(Handler):
             self._scan_for_execute()
 
     def rollback(self):
+        block = self._blocks.pop()
+
+    def clear(self):
+        self.assignments.clear()
         self._pre_executed = None
-        self._blocks.pop()
+        self._execute_blocks = list()
 
     def get_varis(self, block):
         return set(block.get_declared_varis())
