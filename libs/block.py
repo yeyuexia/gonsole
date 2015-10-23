@@ -1,5 +1,7 @@
 # coding: utf8
 
+import re
+
 from .const import STANDARD_SPACE
 
 
@@ -30,3 +32,32 @@ class Block:
                 yield from code.deflate(indent+1)
             else:
                 yield self.inflate_space(code, indent)
+
+    def _filter_real_codes(self, codes):
+        NOT_REAL_CODES_RE = re.compile(r"(\"|'|\d)+")
+        return [
+            code
+            for code in codes
+            if code and not NOT_REAL_CODES_RE.match(code)
+        ]
+
+    def _parse_code_with_symbols(self, code, symbols):
+        if len(symbols) <= 0:
+            return [code.strip()]
+        if code.find(symbols[0]) == -1:
+            return self._parse_code_with_symbols(code, symbols[1:])
+
+        codes = [code]
+        for c in code.split(symbols[0]):
+            codes.extend(
+                self._parse_code_with_symbols(c.strip(') '), symbols[1:])
+            )
+        return codes
+
+    def parse_to_codes(self):
+        SPLIT_SYMBOL = [',', ';', '(', '=', '+', '-', '*', '/']
+        codes = []
+        for code in self.get_codes():
+            codes.extend(self._parse_code_with_symbols(code, SPLIT_SYMBOL))
+
+        return self._filter_real_codes(codes)

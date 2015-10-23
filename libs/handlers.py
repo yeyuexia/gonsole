@@ -47,7 +47,7 @@ class Handler:
         self.declared_assignments = dict()
 
     def scan(self, block):
-        for code in utils.parse_block(block):
+        for code in block.parse_to_codes():
             for name in self.declared_assignments:
                 if self.is_assigned(name, code):
                     self.assignments.add(name, self.handler_type)
@@ -195,7 +195,7 @@ class CodeHandler(Handler):
         return set(self._get_varis(block))
 
     def _get_varis(self, block):
-        for code in utils.parse_block(block):
+        for code in block.parse_to_codes():
             result = self._is_declared_vari(code)
             if result:
                 yield result.group("vari")
@@ -207,7 +207,7 @@ class CodeHandler(Handler):
         return self.VARIABLE_DECLARE_RE.match(code) or self.IS_ASSIGNMENT_RE.match(code)
 
     def is_declared_block(self, block):
-        codes = utils.parse_block(block)
+        codes = block.parse_to_codes()
         return self._is_declared_vari(codes[0])
 
     def _generate_execute_blocks(self):
@@ -224,7 +224,7 @@ class CodeHandler(Handler):
 
     def _need_compile(self, block):
         varis = list(self.get_assignments())
-        for code in utils.parse_block(block):
+        for code in block.parse_to_codes():
             for vari in varis:
                 if self.is_assigned(vari, code):
                     return True
