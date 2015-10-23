@@ -1,5 +1,7 @@
 # coding: utf8
 
+import re
+
 from .const import STANDARD_SPACE
 
 
@@ -12,7 +14,12 @@ def continue_input(iter_count=1):
 
 
 def filter_real_codes(codes):
-    return [code for code in codes if code and not code.startswith('"')]
+    NOT_REAL_CODES_RE = re.compile(r"(\"|'|\d)+")
+    return [
+        code
+        for code in codes
+        if code and not NOT_REAL_CODES_RE.match(code)
+    ]
 
 
 def parse_block(block):
@@ -25,7 +32,7 @@ def parse_block(block):
         codes = [code]
         for c in code.split(symbols[0]):
             codes.extend(
-                parse_code_with_symbols(c.strip(')'), symbols[1:])
+                parse_code_with_symbols(c.strip(') '), symbols[1:])
             )
         return codes
 

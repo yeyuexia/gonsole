@@ -6,7 +6,7 @@ import threading
 from . import utils
 
 
-class AssignmentHandler:
+class AssignmentManager:
 
     _instance = None
 
@@ -20,7 +20,7 @@ class AssignmentHandler:
         if not cls._instance:
             with cls._lock:
                 if not cls._instance:
-                    cls._instance = AssignmentHandler()
+                    cls._instance = AssignmentManager()
         return cls._instance
 
     def add(self, assignment, assignment_type):
@@ -43,12 +43,12 @@ class Handler:
     def __init__(self, template, handler_type):
         self.handler_type = handler_type
         self.template = template
-        self.assignments = AssignmentHandler.instance()
-        self.codes = dict()
+        self.assignments = AssignmentManager.instance()
+        self.declared_assignments = dict()
 
     def scan(self, block):
         for code in utils.parse_block(block):
-            for name in self.codes:
+            for name in self.declared_assignments:
                 if self.is_assigned(name, code):
                     self.assignments.add(name, self.handler_type)
 
@@ -86,10 +86,10 @@ class PackageHandler(Handler):
         self.add('fmt')
 
     def add(self, package):
-        self.codes[(package.strip('"'))] = True
+        self.declared_assignments[(package.strip('"'))] = True
 
     def __len__(self):
-        return len(self.codes)
+        return len(self.declared_assignments)
 
     def used_package_length(self):
         return self.assignments.length()
@@ -118,11 +118,11 @@ class FunctionHandler(Handler):
 
     @property
     def methods(self):
-        return list(self.codes.values())
+        return list(self.declared_assignments.values())
 
     def add(self, method):
         method_name = self._get_method_name(method)
-        self.codes[method_name] = method
+        self.declared_assignments[method_name] = method
         self.scan(method)
 
     def _get_method_name(self, method):
@@ -135,7 +135,7 @@ class FunctionHandler(Handler):
         return "\n".join(list(method.deflate()))
 
     def _assemble(self):
-        for name, method in self.codes.items():
+        for name, method in self.declared_assignments.items():
             if name in self.get_assignments():
                 yield self._assemble_method(method)
 
@@ -143,7 +143,7 @@ class FunctionHandler(Handler):
         return code.find(method) == 0
 
 
-class CodeHandler:
+class CodeHandler(Handler):
 
     CODE_TEMPLATE = "{%code_area%}"
 
@@ -151,92 +151,81 @@ class CodeHandler:
     VARIABLE_DECLARE_RE = re.compile("(var|const) (?P<vari>\w+) ")
 
     def __init__(self):
-        self._blocks = dict()
-        self.auto_increment = 0
-        self.varis = dict()
-        self.assignments = dict()
+        super(CodeHandler, self).__init__(self.CODE_TEMPLATE, "code")
+        self._pre_executed = None
+        self._blocks = list()
+        self._execute_blocks = list()
 
     @property
     def blocks(self):
-        return [
-            block
-            for index, block in self._blocks.items()
-            if self._need_compile(index)
-        ]
+        return self._execute_blocks
 
-    def _get_and_increment_index(self):
-        index = self.auto_increment
-        self.auto_increment += 1
+    def _scan_for_execute(self):
+        if not self._pre_executed:
+            return
 
-        return index
+        def scan_used_codes(used_varis):
+            for varis in used_varis:
+                self.scan(self.declared_assignments[varis])
+            used_names = set(self.get_assignments())
+            if len(used_varis) != len(used_names):
+                scan_used_codes(used_names - used_varis)
+
+        self.scan(self._pre_executed)
+        scan_used_codes(set(self.get_assignments()))
+        self._generate_execute_blocks()
+
+    def get_last(self):
+        return self._pre_executed
 
     def add(self, block):
-        index = self._get_and_increment_index()
-        self._blocks[index] = block
+        self._blocks.append(block)
+        self._pre_executed = block
+        for vari in self._get_varis(block):
+            self.declared_assignments[vari] = block
 
-        if self.is_assignment_block(block):
-            self._store_assignments(index, block)
-        else:
-            self._scan_used_assignments(index, block)
+        if not self.is_declared_block(block):
+            self._scan_for_execute()
 
     def rollback(self):
-        index = max(self._blocks)
-        self._remove_assignment(index)
-        del self._blocks[index]
-
-    def _remove_assignment(self, index):
-        [v.remove(index) for k, v in self.assignments.items() if index in v]
-
-    def _store_assignments(self, index, block):
-        varis = self.get_varis(block)
-        self.varis.update([(vari, index) for vari in varis])
-
-        self.assignments.update([(vari, []) for vari in varis])
+        self._pre_executed = None
+        self._blocks.pop()
 
     def get_varis(self, block):
         return set(self._get_varis(block))
 
     def _get_varis(self, block):
         for code in utils.parse_block(block):
-            result = self._is_assignment(code)
+            result = self._is_declared_vari(code)
             if result:
                 yield result.group("vari")
 
-    def _scan_used_assignments(self, index, block):
-        for _code in utils.parse_block(block):
-            [
-                self.assignments[vari].append(index)
-                for vari in self.assignments
-                if self._used_assignment(vari, _code)
-            ]
-
-    def _used_assignment(self, vari, code):
+    def is_assigned(self, vari, code):
         return code.find(vari) == 0
 
-    def inflate(self, template):
-        return template.replace(self.CODE_TEMPLATE, self._parse_code())
-
-    def is_assignment_block(self, block):
-        for code in block.get_codes():
-            if self._is_assignment(code):
-                return True
-        return False
-
-    def _is_assignment(self, code):
+    def _is_declared_vari(self, code):
         return self.VARIABLE_DECLARE_RE.match(code) or self.IS_ASSIGNMENT_RE.match(code)
 
-    def _deflate_blocks(self):
-        for index, block in self._blocks.items():
-            if self._need_compile(index):
-                yield from block.deflate()
+    def is_declared_block(self, block):
+        codes = utils.parse_block(block)
+        return self._is_declared_vari(codes[0])
 
-    def _parse_code(self):
-        return "\n".join(list(self._deflate_blocks()))
+    def _generate_execute_blocks(self):
+        self._execute_blocks = [
+            block for block in self._blocks if self._need_compile(block)
+        ]
 
-    def _need_compile(self, index):
-        if index not in self.varis.values():
-            return True
-        for vari, _index in self.varis.items():
-            if _index == index and len(self.assignments[vari]) > 0:
-                return True
+    def _deflate_block(self, blocks):
+        for block in blocks:
+            yield from block.deflate()
+
+    def parse_codes(self):
+        return "\n".join(list(self._deflate_block(self.blocks)))
+
+    def _need_compile(self, block):
+        varis = list(self.get_assignments())
+        for code in utils.parse_block(block):
+            for vari in varis:
+                if self.is_assigned(vari, code):
+                    return True
         return False

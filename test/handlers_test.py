@@ -4,13 +4,13 @@ import unittest
 from libs.handlers import CodeHandler
 from libs.handlers import PackageHandler
 from libs.handlers import FunctionHandler
-from libs.handlers import AssignmentHandler
+from libs.handlers import AssignmentManager
 from libs.block import Block
 
 
-class TestAssignmentHandler(unittest.TestCase):
+class TestAssignmentManager(unittest.TestCase):
     def setUp(self):
-        self.handler = AssignmentHandler.instance()
+        self.handler = AssignmentManager.instance()
 
     def test_should_add_assignment(self):
         self.handler.assignments = dict()
@@ -62,18 +62,17 @@ class TestPackageHandler(unittest.TestCase):
 
     def test_scan_used_package_when_block_is_condition_code(self):
         handler = PackageHandler()
-        handler.codes = {'com.yyx.console': True}
+        handler.declared_assignments = {'com.yyx.console': True}
         block = Block("if a == 1 {")
         block.append(Block("console.Find().get()"))
         block.append("}")
 
         handler.scan_used([block])
-
-        self.assertEqual(handler.assignments.length(), 1)
+        self.assertEqual(len(list(handler.get_assignments())), 1)
 
     def test_should_clear_old_package_when_scan_used_package(self):
         handler = PackageHandler()
-        handler.codes = {'com.yyx.console': 1}
+        handler.declared_assignments = {'com.yyx.console': 1}
         handler.assignments.add("com.yyx.text", handler.handler_type)
         block = Block("if a == 1 {")
         block.append(Block("console.Find().get()"))
@@ -98,11 +97,13 @@ class TestFuncHandler(unittest.TestCase):
         handler = FunctionHandler()
         handler.add(Block("func Str2int(sint string) {"))
 
-        self.assertTrue("Str2int" in handler.codes)
+        self.assertTrue("Str2int" in handler.declared_assignments)
 
     def test_should_find_used_method(self):
         handler = FunctionHandler()
-        handler.codes["Str2int"] = Block("func Str2int(sint string) {")
+        handler.declared_assignments["Str2int"] = Block(
+            "func Str2int(sint string) {"
+        )
 
         code = Block('fmt.Println("test" + Str2int("5"))')
         handler.scan_used([code])
@@ -113,7 +114,9 @@ class TestFuncHandler(unittest.TestCase):
 
     def test_should_clear_old_assignment_when_scan_used_method(self):
         handler = FunctionHandler()
-        handler.codes["Str2int"] = Block("func Str2int(sint string) {")
+        handler.declared_assignments["Str2int"] = Block(
+            "func Str2int(sint string) {"
+        )
         handler.assignments.add("aaa", handler.handler_type)
 
         code = Block('fmt.Println("test" + Str2int("5"))')
@@ -124,11 +127,20 @@ class TestFuncHandler(unittest.TestCase):
 
 
 class TestCodeHandler(unittest.TestCase):
+
+    def test_could_success_get_last_input_codes(self):
+        block = Block("var a int64")
+        handler = CodeHandler()
+
+        handler.add(block)
+
+        self.assertEquals(handler.get_last(), block)
+
     def test_success_get_assignment_use_key_word_var(self):
         code = "var a int64"
         handler = CodeHandler()
 
-        result = handler._is_assignment(code)
+        result = handler._is_declared_vari(code)
 
         self.assertTrue(result and True)
 
@@ -136,7 +148,7 @@ class TestCodeHandler(unittest.TestCase):
         code = 'const x string = "hello world"'
         handler = CodeHandler()
 
-        result = handler._is_assignment(code)
+        result = handler._is_declared_vari(code)
 
         self.assertTrue(result and True)
 
@@ -158,11 +170,27 @@ class TestCodeHandler(unittest.TestCase):
         self.assertTrue("x" in varis)
         self.assertTrue(len(varis) == 1)
 
+    def test_success_judge_is_declared_block(self):
+        block = Block('const x string = "hello world"')
+        handler = CodeHandler()
+
+        result = handler.is_declared_block(block)
+
+        self.assertTrue(result)
+
+    def test_success_judge_is_declared_block_with_inital_symbol(self):
+        block = Block('a := "123"')
+        handler = CodeHandler()
+
+        result = handler.is_declared_block(block)
+
+        self.assertTrue(result)
+
     def test_success_check_is_assignment(self):
         code = 'a := "123"'
         handler = CodeHandler()
 
-        result = handler._is_assignment(code)
+        result = handler._is_declared_vari(code)
 
         self.assertTrue(result and True)
 
@@ -179,36 +207,36 @@ class TestCodeHandler(unittest.TestCase):
         code = '1 <= 2'
         handler = CodeHandler()
 
-        result = handler._is_assignment(code)
+        result = handler._is_declared_vari(code)
 
         self.assertEqual(result or False, False)
 
     def test_can_check_used_assignment(self):
         handler = CodeHandler()
         handler.varis = dict(a=0)
-        handler.assignments = dict(a=[])
+        handler.declared_assignments = dict(a=Block("a := 1"))
 
         block = Block('fmt.Println(a)')
-        handler._scan_used_assignments(1, block)
+        handler.scan_used([block])
 
-        self.assertEqual(len(handler.assignments["a"]), 1)
-        self.assertEqual(handler.assignments["a"], [1])
+        self.assertEqual(len(list(handler.get_assignments())), 1)
+        self.assertTrue("a" in handler.get_assignments())
 
     def test_is_need_compile_would_return_true_if_not_assignment_code(self):
         handler = CodeHandler()
+        handler.assignments.add("a", handler.handler_type)
 
-        result = handler._need_compile(1)
+        result = handler._need_compile(Block("fmt.Println(a)"))
 
-        self.assertEqual(result, True)
+        self.assertTrue(result)
 
     def test_is_used_assignment_need_compile_would_return_true(self):
         handler = CodeHandler()
-        handler.varis = dict(a=1)
-        handler.assignments = dict(a=[2])
+        handler.declared_assignments["a"] = Block("a := 1")
 
-        result = handler._need_compile(1)
+        result = handler._need_compile(Block("a.get()"))
 
-        self.assertEqual(result, True)
+        self.assertTrue(result)
 
 
 if __name__ == '__main__':
