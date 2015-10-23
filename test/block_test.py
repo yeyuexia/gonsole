@@ -32,6 +32,71 @@ class TestBlock(unittest.TestCase):
         self.assertEqual(len(result), 2)
         self.assertTrue(result[0].startswith('get'))
 
+    def test_return_true_when_is_a_declared_vari_code(self):
+        block = Block("a := 1")
+
+        result = block.is_declared()
+
+        self.assertTrue(result)
+
+    def test_return_false_when_declared_and_used_block(self):
+        block = Block("a := 1; a++")
+
+        result = block.is_declared()
+
+        self.assertTrue(not result)
+
+    def test_return_false_when_give_a_not_declared_code(self):
+        block = Block("a >= 1")
+
+        result = block.is_declared()
+
+        self.assertTrue(not result)
+
+    def test_success_get_assignment_use_key_word_var(self):
+        block = Block("var a int64")
+
+        result = block.is_declared()
+
+        self.assertTrue(result)
+
+    def test_success_get_assignment_use_key_word_const(self):
+        block = Block('const x string = "hello world"')
+
+        result = block.is_declared()
+
+        self.assertTrue(result)
+
+    def test_success_get_vari_when_use_key_word_var(self):
+        block = Block("var a int64")
+
+        varis = set(block.get_declared_varis())
+
+        self.assertTrue("a" in varis)
+        self.assertTrue(len(varis) == 1)
+
+    def test_success_get_vari_when_use_key_word_const(self):
+        block = Block('const x string = "hello world"')
+
+        varis = set(block.get_declared_varis())
+
+        self.assertTrue("x" in varis)
+        self.assertTrue(len(varis) == 1)
+
+    def test_success_judge_is_declared_block(self):
+        block = Block('const x string = "hello world"')
+
+        result = block.is_declared()
+
+        self.assertTrue(result)
+
+    def test_success_get_vari_when_declear(self):
+        block = Block('a := "123"')
+
+        varis = set(block.get_declared_varis())
+
+        self.assertTrue("a" in varis)
+        self.assertTrue(len(varis) == 1)
 
 if __name__ == '__main__':
     unittest.main()

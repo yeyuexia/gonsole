@@ -181,10 +181,10 @@ class CodeHandler(Handler):
     def add(self, block):
         self._blocks.append(block)
         self._pre_executed = block
-        for vari in self._get_varis(block):
+        for vari in block.get_declared_varis():
             self.declared_assignments[vari] = block
 
-        if not self.is_declared_block(block):
+        if not block.is_declared():
             self._scan_for_execute()
 
     def rollback(self):
@@ -192,23 +192,10 @@ class CodeHandler(Handler):
         self._blocks.pop()
 
     def get_varis(self, block):
-        return set(self._get_varis(block))
-
-    def _get_varis(self, block):
-        for code in block.parse_to_codes():
-            result = self._is_declared_vari(code)
-            if result:
-                yield result.group("vari")
+        return set(block.get_declared_varis())
 
     def is_assigned(self, vari, code):
         return code.find(vari) == 0
-
-    def _is_declared_vari(self, code):
-        return self.VARIABLE_DECLARE_RE.match(code) or self.IS_ASSIGNMENT_RE.match(code)
-
-    def is_declared_block(self, block):
-        codes = block.parse_to_codes()
-        return self._is_declared_vari(codes[0])
 
     def _generate_execute_blocks(self):
         self._execute_blocks = [

@@ -136,22 +136,6 @@ class TestCodeHandler(unittest.TestCase):
 
         self.assertEquals(handler.get_last(), block)
 
-    def test_success_get_assignment_use_key_word_var(self):
-        code = "var a int64"
-        handler = CodeHandler()
-
-        result = handler._is_declared_vari(code)
-
-        self.assertTrue(result and True)
-
-    def test_success_get_assignment_use_key_word_const(self):
-        code = 'const x string = "hello world"'
-        handler = CodeHandler()
-
-        result = handler._is_declared_vari(code)
-
-        self.assertTrue(result and True)
-
     def test_success_get_vari_when_use_key_word_var(self):
         block = Block("var a int64")
         handler = CodeHandler()
@@ -169,47 +153,6 @@ class TestCodeHandler(unittest.TestCase):
 
         self.assertTrue("x" in varis)
         self.assertTrue(len(varis) == 1)
-
-    def test_success_judge_is_declared_block(self):
-        block = Block('const x string = "hello world"')
-        handler = CodeHandler()
-
-        result = handler.is_declared_block(block)
-
-        self.assertTrue(result)
-
-    def test_success_judge_is_declared_block_with_inital_symbol(self):
-        block = Block('a := "123"')
-        handler = CodeHandler()
-
-        result = handler.is_declared_block(block)
-
-        self.assertTrue(result)
-
-    def test_success_check_is_assignment(self):
-        code = 'a := "123"'
-        handler = CodeHandler()
-
-        result = handler._is_declared_vari(code)
-
-        self.assertTrue(result and True)
-
-    def test_success_get_vari_when_declear(self):
-        block = Block('a := "123"')
-        handler = CodeHandler()
-
-        varis = list(handler._get_varis(block))
-
-        self.assertTrue("a" in varis)
-        self.assertTrue(len(varis) == 1)
-
-    def test_check_is_not_assignment(self):
-        code = '1 <= 2'
-        handler = CodeHandler()
-
-        result = handler._is_declared_vari(code)
-
-        self.assertEqual(result or False, False)
 
     def test_can_check_used_assignment(self):
         handler = CodeHandler()
