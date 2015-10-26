@@ -118,7 +118,9 @@ class FunctionHandler(Handler):
 
     @property
     def methods(self):
-        return list(self.declared_assignments.values())
+        return [
+            self.declared_assignments[name] for name in self.get_assignments()
+        ]
 
     def add(self, method):
         method_name = self._get_method_name(method)

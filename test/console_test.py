@@ -89,9 +89,21 @@ class TestConsole(unittest.TestCase):
         console.export.assert_called_once_with(code)
 
 
-if __name__ == '__main__':
-    unittest.main()
+class TestConsoleIntegration(unittest.TestCase):
 
+    def test_defined_method_but_not_call_it_should_not_assigned(self):
+        console = Console("")
+        block = Block("func a(i int) {")
+        block.append(Block("fmt.Println(i)"))
+        block.append(Block("}"))
+        console.custom_methods.add(block)
+
+        console.custom_methods.scan_used(console.codes.blocks)
+        console.packages.scan_used(
+            console.codes.blocks + console.custom_methods.methods
+        )
+
+        self.assertEqual(len(console.custom_methods.methods), 0)
 
 if __name__ == '__main__':
     unittest.main()
