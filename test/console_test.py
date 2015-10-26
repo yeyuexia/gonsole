@@ -79,6 +79,15 @@ class TestConsole(unittest.TestCase):
         self.assertEqual(len(result), 1)
         self.assertEqual(result[0].startswith('get'), True)
 
+    def test_call_export_when_input_export_command(self):
+        console = Console("")
+        console.export = mock.MagicMock()
+        code = "export test"
+
+        console.parse_input(code)
+
+        console.export.assert_called_once_with(code)
+
 
 if __name__ == '__main__':
     unittest.main()

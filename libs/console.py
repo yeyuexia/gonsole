@@ -42,6 +42,8 @@ class Console:
             return
         if text == "exit":
             sys.exit(0)
+        elif text.startswith("export "):
+            self.export(text)
         elif text.startswith("import "):
             self.cache_packages(text)
         elif text.startswith("func "):
@@ -54,19 +56,24 @@ class Console:
                 self._rollback()
             self.execute()
 
+    def export(self, command):
+        self._write_to_file(command[7:].strip())
+
     def execute(self):
         self.custom_methods.scan_used(self.codes.blocks)
         self.packages.scan_used(
             self.codes.blocks + self.custom_methods.methods
         )
-        with open(self.CACHE_FILE_PATH, "w") as f:
+        self._write_to_file(self.CACHE_FILE_PATH)
+        self._execute()
+
+    def _write_to_file(self, file_path):
+        with open(file_path, "w") as f:
             f.write(self.packages.inflate(
                 self.custom_methods.inflate(
                     self.codes.inflate(self._template)
                 )
             ))
-        self._execute()
-        self.codes.clear()
 
     def _execute(self):
         out, err = subprocess.Popen(
@@ -94,6 +101,7 @@ class Console:
             print(out.decode("utf8").rstrip())
 
     def cache_code(self, code):
+        self.codes.clear()
         self.codes.add(self.wrap(code))
 
     def wrap(self, code, iter_count=1):
