@@ -29,7 +29,6 @@ class Console:
             path, 'console', '_cache'
         )
         if not os.path.exists(file_path):
-            print("create_path")
             os.makedirs(file_path)
         return os.path.join(file_path, "main.go")
 
