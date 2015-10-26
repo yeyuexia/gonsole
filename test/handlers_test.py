@@ -193,7 +193,7 @@ class TestCodeHandler(unittest.TestCase):
 
         codes = handler.parse_codes()
 
-        self.assertEquals("fmt.Println('1')", codes)
+        self.assertEquals("    fmt.Println('1')", codes)
 
     def test_if_a_variable_not_declared_before_should_raise_error(self):
         handler = CodeHandler()

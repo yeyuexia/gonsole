@@ -212,7 +212,7 @@ class CodeHandler(Handler):
     def _deflate_block(self, blocks):
         _blocks = list()
         for block in blocks:
-            _blocks.extend(block.deflate())
+            _blocks.extend(block.deflate(1))
         return _blocks
 
     def parse_codes(self):
