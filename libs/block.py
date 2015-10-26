@@ -33,7 +33,7 @@ class Block:
                 codes.append(code)
         return codes
 
-    def deflate(self, indent=0):
+    def deflate(self, indent=1):
         codes = []
         for code in self.codes:
             if isinstance(code, Block):

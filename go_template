@@ -7,5 +7,5 @@ import (
 {%func_area%}
 
 func main() {
-    {%code_area%}
+{%code_area%}
 }
