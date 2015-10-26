@@ -28,9 +28,9 @@ class Console:
 
     def run(self):
         while True:
-            self._parse_input(single_line_input())
+            self.parse_input(single_line_input())
 
-    def _parse_input(self, text):
+    def parse_input(self, text):
         if not text:
             return
         if text == "exit":

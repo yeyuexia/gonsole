@@ -67,6 +67,13 @@ class TestBlock(unittest.TestCase):
 
         self.assertTrue(result)
 
+    def test_success_judge_is_declared_block(self):
+        block = Block('const x string = "hello world"')
+
+        result = block.is_declared()
+
+        self.assertTrue(result)
+
     def test_success_get_vari_when_use_key_word_var(self):
         block = Block("var a int64")
 
@@ -82,13 +89,6 @@ class TestBlock(unittest.TestCase):
 
         self.assertTrue("x" in varis)
         self.assertTrue(len(varis) == 1)
-
-    def test_success_judge_is_declared_block(self):
-        block = Block('const x string = "hello world"')
-
-        result = block.is_declared()
-
-        self.assertTrue(result)
 
     def test_success_get_vari_when_declear(self):
         block = Block('a := "123"')

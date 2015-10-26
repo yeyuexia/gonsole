@@ -13,7 +13,7 @@ class TestConsole(unittest.TestCase):
     def test_invoke_sys_exit_when_given_code_exit(self, mock_exit):
         console = Console('')
 
-        console._parse_input('exit')
+        console.parse_input('exit')
 
         mock_exit.assert_called_once_with(0)
 
@@ -21,7 +21,7 @@ class TestConsole(unittest.TestCase):
         code = 'import "yyx"'
         console = Console('')
 
-        console._parse_input(code)
+        console.parse_input(code)
 
         self.assertEqual(len(console.packages), 2)
         self.assertTrue("yyx" in console.packages.declared_assignments)
@@ -30,8 +30,8 @@ class TestConsole(unittest.TestCase):
         code = 'import "fmt"'
         console = Console('')
 
-        console._parse_input(code)
-        console._parse_input(code)
+        console.parse_input(code)
+        console.parse_input(code)
 
         self.assertEqual(len(console.packages.declared_assignments), 1)
         self.assertTrue("fmt" in console.packages.declared_assignments)
@@ -39,9 +39,18 @@ class TestConsole(unittest.TestCase):
     def test_console_nothing_if_give_empty_str(self):
         console = Console('')
 
-        console._parse_input('')
+        console.parse_input('')
 
         self.assertEqual(len(console.codes.blocks), 0)
+
+    def test_handle_function_when_code_was_start_with_func(self):
+        console = Console("")
+        console.cache_func = mock.MagicMock()
+        code = "func test():"
+
+        console.parse_input(code)
+
+        console.cache_func.assert_called_once_with(code)
 
     def test_parse_single_code(self):
         console = Console('')
@@ -70,15 +79,6 @@ class TestConsole(unittest.TestCase):
         self.assertEqual(len(result), 1)
         self.assertEqual(result[0].startswith('get'), True)
 
-    def test_handle_function_when_code_was_start_with_func(
-            self):
-        console = Console("")
-        console.cache_func = mock.MagicMock()
-        code = "func test():"
-
-        console._parse_input(code)
-
-        console.cache_func.assert_called_once_with(code)
 
 if __name__ == '__main__':
     unittest.main()

@@ -173,7 +173,7 @@ class TestCodeHandler(unittest.TestCase):
         handler = CodeHandler()
         handler.assignments.add("a", handler.handler_type)
 
-        result = handler._need_compile(Block("fmt.Println(a)"))
+        result = handler.need_compile(Block("fmt.Println(a)"))
 
         self.assertTrue(result)
 
@@ -181,7 +181,7 @@ class TestCodeHandler(unittest.TestCase):
         handler = CodeHandler()
         handler.declared_assignments["a"] = Block("a := 1")
 
-        result = handler._need_compile(Block("a.get()"))
+        result = handler.need_compile(Block("a.get()"))
 
         self.assertTrue(result)
 

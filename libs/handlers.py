@@ -202,7 +202,7 @@ class CodeHandler(Handler):
 
     def _generate_execute_blocks(self):
         self._execute_blocks = [
-            block for block in self._blocks if self._need_compile(block)
+            block for block in self._blocks if self.need_compile(block)
         ]
 
     def _deflate_block(self, blocks):
@@ -212,7 +212,7 @@ class CodeHandler(Handler):
     def parse_codes(self):
         return "\n".join(list(self._deflate_block(self.blocks)))
 
-    def _need_compile(self, block):
+    def need_compile(self, block):
         varis = list(self.get_assignments())
         for code in block.parse_to_codes():
             for vari in varis:
