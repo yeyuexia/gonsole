@@ -4,6 +4,7 @@ import re
 import threading
 
 from . import utils
+from .exceptions import NotDeclaredError
 
 
 class AssignmentManager:
@@ -160,19 +161,21 @@ class CodeHandler(Handler):
         return self._execute_blocks
 
     def _scan_for_execute(self):
-        if not self._pre_executed:
-            return
+        scanned_varis = set()
 
         def scan_used_codes(used_varis):
+            scanned_varis.update(used_varis)
             for varis in used_varis:
                 self.scan(self.declared_assignments[varis])
             used_names = set(self.get_assignments())
-            if len(used_varis) != len(used_names):
-                scan_used_codes(used_names - used_varis)
+            if scanned_varis != used_names:
+                scan_used_codes(used_names - scanned_varis)
 
         self.scan(self._pre_executed)
         scan_used_codes(set(self.get_assignments()))
         self._generate_execute_blocks()
+        if not self._execute_blocks:
+            raise NotDeclaredError
 
     def get_last(self):
         return self._pre_executed
@@ -180,11 +183,12 @@ class CodeHandler(Handler):
     def add(self, block):
         self._blocks.append(block)
         self._pre_executed = block
-        for vari in block.get_declared_varis():
-            self.declared_assignments[vari] = block
 
         if not block.is_declared():
             self._scan_for_execute()
+        else:
+            for vari in block.get_declared_varis():
+                self.declared_assignments[vari] = block
 
     def rollback(self):
         self._blocks.pop()

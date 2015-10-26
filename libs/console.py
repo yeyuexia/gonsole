@@ -7,9 +7,10 @@ import subprocess
 from .block import Block
 from .utils import continue_input
 from .utils import single_line_input
+from .handlers import CodeHandler
 from .handlers import PackageHandler
 from .handlers import FunctionHandler
-from .handlers import CodeHandler
+from .exceptions import NotDeclaredError
 
 
 class Console:
@@ -46,7 +47,11 @@ class Console:
         elif text.startswith("func "):
             self.cache_func(text)
         else:
-            self.cache_code(text)
+            try:
+                self.cache_code(text)
+            except NotDeclaredError:
+                print("parameter not declared")
+                self._rollback()
             self.execute()
 
     def execute(self):

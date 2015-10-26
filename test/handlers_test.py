@@ -1,11 +1,13 @@
 # coding: utf8
 import unittest
 
+from libs.block import Block
 from libs.handlers import CodeHandler
 from libs.handlers import PackageHandler
 from libs.handlers import FunctionHandler
 from libs.handlers import AssignmentManager
-from libs.block import Block
+from libs.exceptions import NotDeclaredError
+
 
 
 class TestAssignmentManager(unittest.TestCase):
@@ -192,6 +194,13 @@ class TestCodeHandler(unittest.TestCase):
         codes = handler.parse_codes()
 
         self.assertEquals("fmt.Println('1')", codes)
+
+    def test_if_a_variable_not_declared_before_should_raise_error(self):
+        handler = CodeHandler()
+        handler.assignments.clear()
+
+        with self.assertRaises(NotDeclaredError):
+            handler.add(Block("b = 2"))
 
 
 if __name__ == '__main__':
