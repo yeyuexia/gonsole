@@ -38,7 +38,7 @@ class AssignmentManager:
         return len(self.assignments)
 
 
-class Handler:
+class Handler(object):  # for compatibility to python 2.x
 
     def __init__(self, template, handler_type):
         self.handler_type = handler_type
@@ -187,7 +187,7 @@ class CodeHandler(Handler):
             self._scan_for_execute()
 
     def rollback(self):
-        block = self._blocks.pop()
+        self._blocks.pop()
 
     def clear(self):
         self.assignments.clear()
@@ -206,8 +206,10 @@ class CodeHandler(Handler):
         ]
 
     def _deflate_block(self, blocks):
+        _blocks = list()
         for block in blocks:
-            yield from block.deflate()
+            _blocks.extend(block.deflate())
+        return _blocks
 
     def parse_codes(self):
         return "\n".join(list(self._deflate_block(self.blocks)))

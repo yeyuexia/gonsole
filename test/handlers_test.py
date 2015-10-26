@@ -185,6 +185,14 @@ class TestCodeHandler(unittest.TestCase):
 
         self.assertTrue(result)
 
+    def test_parse_right_codes_when_give_a_simple_block(self):
+        handler = CodeHandler()
+        handler._execute_blocks = [Block("fmt.Println('1')")]
+
+        codes = handler.parse_codes()
+
+        self.assertEquals("fmt.Println('1')", codes)
+
 
 if __name__ == '__main__':
     unittest.main()

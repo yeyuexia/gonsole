@@ -25,18 +25,22 @@ class Block:
                 yield result.group("vari")
 
     def get_codes(self):
+        codes = []
         for code in self.codes:
             if isinstance(code, Block):
-                yield from code.get_codes()
+                codes.extend(code.get_codes())
             else:
-                yield code
+                codes.append(code)
+        return codes
 
     def deflate(self, indent=0):
+        codes = []
         for code in self.codes:
             if isinstance(code, Block):
-                yield from code.deflate(indent+1)
+                codes.extend(code.deflate(indent+1))
             else:
-                yield self.inflate_space(code, indent)
+                codes.append(self.inflate_space(code, indent))
+        return codes
 
     def _filter_real_codes(self, codes):
         NOT_REAL_CODES_RE = re.compile(r"(\"|'|\d)+")
