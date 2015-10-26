@@ -15,16 +15,23 @@ from .handlers import CodeHandler
 class Console:
 
     def __init__(self, path):
+        self.CACHE_FILE_PATH = self._generate_file_path(path)
         self.GO_CODE_TEMPLATE = os.path.join(path, 'go_template')
-        self.CACHE_FILE_PATH = os.path.join(
-            path, 'console', '_cache', 'main.go'
-        )
 
         with open(self.GO_CODE_TEMPLATE) as f:
             self._template = f.read()
         self.codes = CodeHandler()
         self.packages = PackageHandler()
         self.custom_methods = FunctionHandler()
+
+    def _generate_file_path(self, path):
+        file_path = os.path.join(
+            path, 'console', '_cache'
+        )
+        if not os.path.exists(file_path):
+            print("create_path")
+            os.makedirs(file_path)
+        return os.path.join(file_path, "main.go")
 
     def run(self):
         while True:
