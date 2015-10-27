@@ -63,33 +63,6 @@ class TestConsole(unittest.TestCase):
 
         console.cache_func.assert_called_once_with(code)
 
-    def test_parse_single_code(self):
-        console = Console('')
-
-        result = console.parse_block(Block('fmt.Println("aa")'))
-
-        self.assertEqual(type(result), list)
-        self.assertEqual(len(result), 1)
-
-    def test_parse_two_method_when_use_package_method_as_anothers_value(self):
-        console = Console('')
-        block = Block("get(console.Find())")
-
-        result = console.parse_block(block)
-
-        self.assertEqual(len(result), 2)
-        self.assertEqual(result[0].startswith('get'), True)
-        self.assertEqual(result[1].startswith('console.'), True)
-
-    def test_parse_one_metho_when_a_string_like_method(self):
-        console = Console('')
-        block = Block('get("console.Find()")')
-
-        result = console.parse_block(block)
-
-        self.assertEqual(len(result), 1)
-        self.assertEqual(result[0].startswith('get'), True)
-
     def test_call_export_when_input_export_command(self):
         console = Console("")
         console.export = mock.MagicMock()
@@ -138,9 +111,6 @@ class TestConsoleIntegration(unittest.TestCase):
         console.custom_methods.add(block)
         console.codes.add(Block("a(2)"))
         console.custom_methods.scan_used(console.codes.blocks)
-        print(console.codes.blocks)
-        print(console.custom_methods.methods)
-        print(console.custom_methods.get_declared())
         console.packages.scan_used(
             console.codes.blocks + console.custom_methods.methods
         )

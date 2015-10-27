@@ -26,7 +26,7 @@ class Console:
         self.packages = PackageHandler()
         self.custom_methods = FunctionHandler()
         self.assignment_manager = AssignmentManager()
-        self.block_geneator = BlockGenerator()
+        self.block_generator = BlockGenerator()
 
     def _generate_file_path(self, path):
         file_path = os.path.join(
@@ -69,7 +69,10 @@ class Console:
         self.packages.scan_used(
             self.codes.blocks + self.custom_methods.methods
         )
-        if not self.assignment_manager.get_all_assigned():
+        if (
+            self.codes.blocks and
+            not self.assignment_manager.get_all_assigned()
+        ):
             raise NotDeclaredError
         else:
             self._write_to_file(self.CACHE_FILE_PATH)
@@ -117,24 +120,6 @@ class Console:
 
     def _filter_real_codes(self, codes):
         return [code for code in codes if code and not code.startswith('"')]
-
-    def parse_block(self, block):
-        def parse_code_with_symbols(code, symbols):
-            if len(symbols) <= 0:
-                return [code]
-            codes = []
-            for c in code.split(symbols[0]):
-                codes.extend(
-                    parse_code_with_symbols(c.strip(')'), symbols[1:])
-                )
-            return codes
-
-        SPLIT_SYMBOL = [',', ';', '(']
-        codes = []
-        for code in block.get_codes():
-            codes.extend(parse_code_with_symbols(code, SPLIT_SYMBOL))
-
-        return self._filter_real_codes(codes)
 
     def cache_packages(self, code):
         if code.endswith("("):
