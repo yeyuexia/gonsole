@@ -85,8 +85,7 @@ class TestConsoleIntegration(unittest.TestCase):
 
     def test_defined_method_but_not_call_it_should_not_assigned(self):
         console = Console("")
-        console.codes.assignment_manager.clear()
-        console.codes.get_declared().clear()
+        console.assignment_manager.clear()
         block = Block("func a(i int) {")
         block.append(Block("fmt.Println(i)"))
         block.append(Block("}"))
@@ -101,8 +100,7 @@ class TestConsoleIntegration(unittest.TestCase):
 
     def test_pre_define_vari_a_then_overload_a_as_method_should_change_assignment(self):
         console = Console("")
-        console.codes.assignment_manager.clear()
-        console.codes.get_declared().clear()
+        console.assignment_manager.clear()
         block = Block("func a(i int) {")
         block.append(Block("fmt.Println(i)"))
         block.append(Block("}"))
@@ -117,6 +115,19 @@ class TestConsoleIntegration(unittest.TestCase):
 
         self.assertTrue("a" not in console.codes.get_assignments())
         self.assertTrue("a" in console.custom_methods.get_assignments())
+
+    def test_if_invoke_vari_could_get_the_vari_declared(self):
+        console = Console("")
+        console.assignment_manager.clear()
+
+        console.codes.add(Block("a := 1"))
+        console.codes.add(Block('b := "hello"'))
+        console.codes.add(Block('c := b + "?"'))
+        console.codes.add(Block('a++'))
+        self.assertTrue("a" in console.codes.get_assignments())
+        self.assertTrue(
+            "a" in console.assignment_manager.get_all_assigned()
+        )
 
 
 if __name__ == '__main__':

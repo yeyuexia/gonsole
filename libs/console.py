@@ -25,7 +25,7 @@ class Console:
         self.codes = CodeHandler()
         self.packages = PackageHandler()
         self.custom_methods = FunctionHandler()
-        self.assignment_manager = AssignmentManager()
+        self.assignment_manager = AssignmentManager.instance()
         self.block_generator = BlockGenerator()
 
     def _generate_file_path(self, path):
