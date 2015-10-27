@@ -4,7 +4,6 @@ import re
 import threading
 
 from . import utils
-from .exceptions import NotDeclaredError
 
 
 class AssignmentManager:
@@ -15,6 +14,7 @@ class AssignmentManager:
 
     def __init__(self):
         self.assignments = dict()
+        self.declared_assignments = dict()
 
     @classmethod
     def instance(cls):
@@ -24,13 +24,29 @@ class AssignmentManager:
                     cls._instance = AssignmentManager()
         return cls._instance
 
-    def add(self, assignment, assignment_type):
+    def add_assignment(self, assignment, assignment_type):
         self.assignments[assignment] = assignment_type
 
-    def get(self, assignment_type):
+    def add_declared(self, assignment_type, assignment, codes):
+        self.declared_assignments[assignment] = (assignment_type, codes)
+
+    def get_assigned(self, assignment_type):
         for assignment, _type in self.assignments.items():
             if _type == assignment_type:
                 yield assignment
+
+    def get_all_assigned(self):
+        return self.assignments.keys()
+
+    def get_all_declared(self):
+        return self.declared_assignments
+
+    def get_declared(self, assignment_type):
+        declareds = dict()
+        for name, value in self.declared_assignments.items():
+            if value[0] == assignment_type:
+                declareds[name] = value[1]
+        return declareds
 
     def clear(self):
         self.assignments.clear()
@@ -44,14 +60,15 @@ class Handler(object):  # for compatibility to python 2.x
     def __init__(self, template, handler_type):
         self.handler_type = handler_type
         self.template = template
-        self.assignments = AssignmentManager.instance()
-        self.declared_assignments = dict()
+        self.assignment_manager = AssignmentManager.instance()
 
     def scan(self, block):
         for code in block.parse_to_codes():
-            for name in self.declared_assignments:
+            for name in self.get_declared():
                 if self.is_assigned(name, code):
-                    self.assignments.add(name, self.handler_type)
+                    self.assignment_manager.add_assignment(
+                        name, self.handler_type
+                    )
 
     def add(self, codes):
         raise NotImplementedError()
@@ -70,7 +87,13 @@ class Handler(object):  # for compatibility to python 2.x
         return template.replace(self.template, self.parse_codes())
 
     def get_assignments(self):
-        return self.assignments.get(self.handler_type)
+        return self.assignment_manager.get_assigned(self.handler_type)
+
+    def add_declared(self, name, codes):
+        self.assignment_manager.add_declared(self.handler_type, name, codes)
+
+    def get_declared(self):
+        return self.assignment_manager.get_declared(self.handler_type)
 
 
 class PackageHandler(Handler):
@@ -86,13 +109,11 @@ class PackageHandler(Handler):
         self.add('fmt')
 
     def add(self, package):
-        self.declared_assignments[(package.strip('"'))] = True
-
-    def __len__(self):
-        return len(self.declared_assignments)
+        package = package.strip('"')
+        self.add_declared(package, package)
 
     def used_package_length(self):
-        return self.assignments.length()
+        return self.assignment_manager.length()
 
     def is_assigned(self, name, code):
         name = name.split('.')[-1]
@@ -118,14 +139,11 @@ class FunctionHandler(Handler):
 
     @property
     def methods(self):
-        return [
-            self.declared_assignments[name] for name in self.get_assignments()
-        ]
+        return [self.get_declared()[name] for name in self.get_assignments()]
 
     def add(self, method):
         method_name = self._get_method_name(method)
-        self.declared_assignments[method_name] = method
-        self.scan(method)
+        self.add_declared(method_name, method)
 
     def _get_method_name(self, method):
         return self.METHOD_NAME_RE.search(method.codes[0]).group("method_name")
@@ -137,7 +155,7 @@ class FunctionHandler(Handler):
         return "\n".join(list(method.deflate()))
 
     def _assemble(self):
-        for name, method in self.declared_assignments.items():
+        for name, method in self.get_declared().items():
             if name in self.get_assignments():
                 yield self._assemble_method(method)
 
@@ -168,7 +186,7 @@ class CodeHandler(Handler):
         def scan_used_codes(used_varis):
             scanned_varis.update(used_varis)
             for varis in used_varis:
-                self.scan(self.declared_assignments[varis])
+                self.scan(self.get_declared()[varis])
             used_names = set(self.get_assignments())
             if scanned_varis != used_names:
                 scan_used_codes(used_names - scanned_varis)
@@ -176,8 +194,6 @@ class CodeHandler(Handler):
         self.scan(self._pre_executed)
         scan_used_codes(set(self.get_assignments()))
         self._generate_execute_blocks()
-        if not self._execute_blocks:
-            raise NotDeclaredError
 
     def get_last(self):
         return self._pre_executed
@@ -190,13 +206,13 @@ class CodeHandler(Handler):
             self._scan_for_execute()
         else:
             for vari in block.get_declared_varis():
-                self.declared_assignments[vari] = block
+                self.add_declared(vari, block)
 
     def rollback(self):
         self._blocks.pop()
 
     def clear(self):
-        self.assignments.clear()
+        self.assignment_manager.clear()
         self._pre_executed = None
         self._execute_blocks = list()
 
@@ -221,6 +237,8 @@ class CodeHandler(Handler):
         return "\n".join(list(self._deflate_block(self.blocks)))
 
     def need_compile(self, block):
+        if block == self._pre_executed:
+            return True
         varis = list(self.get_assignments())
         for code in block.parse_to_codes():
             for vari in varis:

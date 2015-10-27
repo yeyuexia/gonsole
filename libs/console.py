@@ -7,6 +7,7 @@ import subprocess
 from .block import Block
 from .utils import continue_input
 from .utils import single_line_input
+from .handlers import AssignmentManager
 from .handlers import CodeHandler
 from .handlers import PackageHandler
 from .handlers import FunctionHandler
@@ -24,6 +25,7 @@ class Console:
         self.codes = CodeHandler()
         self.packages = PackageHandler()
         self.custom_methods = FunctionHandler()
+        self.assignment_manager = AssignmentManager()
 
     def _generate_file_path(self, path):
         file_path = os.path.join(
@@ -49,23 +51,27 @@ class Console:
         elif text.startswith("func "):
             self.cache_func(text)
         else:
+            self.cache_code(text)
             try:
-                self.cache_code(text)
+                self.prepare()
             except NotDeclaredError:
                 print("parameter not declared")
                 self._rollback()
+
             self.execute()
 
     def export(self, command):
         self._write_to_file(command[7:].strip())
 
-    def execute(self):
+    def prepare(self):
         self.custom_methods.scan_used(self.codes.blocks)
         self.packages.scan_used(
             self.codes.blocks + self.custom_methods.methods
         )
-        self._write_to_file(self.CACHE_FILE_PATH)
-        self._execute()
+        if not self.assignment_manager.get_all_assigned():
+            raise NotDeclaredError
+        else:
+            self._write_to_file(self.CACHE_FILE_PATH)
 
     def _write_to_file(self, file_path):
         with open(file_path, "w") as f:
@@ -75,7 +81,7 @@ class Console:
                 )
             ))
 
-    def _execute(self):
+    def execute(self):
         out, err = subprocess.Popen(
             ["go", "run", self.CACHE_FILE_PATH],
             stdout=subprocess.PIPE,
