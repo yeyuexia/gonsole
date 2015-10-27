@@ -212,7 +212,6 @@ class CodeHandler(Handler):
         self._blocks.pop()
 
     def clear(self):
-        self.assignment_manager.clear()
         self._pre_executed = None
         self._execute_blocks = list()
 

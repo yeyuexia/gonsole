@@ -4,7 +4,7 @@ import os
 import sys
 import subprocess
 
-from .block import Block
+from .block import BlockGenerator
 from .utils import continue_input
 from .utils import single_line_input
 from .handlers import AssignmentManager
@@ -26,6 +26,7 @@ class Console:
         self.packages = PackageHandler()
         self.custom_methods = FunctionHandler()
         self.assignment_manager = AssignmentManager()
+        self.block_geneator = BlockGenerator()
 
     def _generate_file_path(self, path):
         file_path = os.path.join(
@@ -90,6 +91,7 @@ class Console:
         ).communicate()
 
         self._parse_output(out, err)
+        self.assignment_manager.clear()
 
     def _parse_err_message(self, err):
         err = err.decode("utf8").split("\n")
@@ -108,20 +110,10 @@ class Console:
 
     def cache_code(self, code):
         self.codes.clear()
-        self.codes.add(self.wrap(code))
-
-    def wrap(self, code, iter_count=1):
-        block = Block(code)
-        if code.strip().endswith("{"):
-            code = continue_input(iter_count)
-            while not code.endswith("}"):
-                block.append(self.wrap(code, iter_count + 1))
-                code = continue_input(iter_count)
-            block.append(code)
-        return block
+        self.codes.add(self.block_generator.generate(code))
 
     def cache_func(self, code):
-        self.custom_methods.add(self.wrap(code))
+        self.custom_methods.add(self.block_generator.generate(code))
 
     def _filter_real_codes(self, codes):
         return [code for code in codes if code and not code.startswith('"')]

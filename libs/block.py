@@ -4,6 +4,25 @@ import re
 
 from .const import STANDARD_SPACE
 
+from .utils import continue_input
+
+
+class BlockGenerator:
+    def generate(self, code, iter_count=1):
+        block = Block(code)
+        if code.strip().endswith("{"):
+            self.continuing_get_input("}", block, iter_count)
+        elif code.strip().endswith("("):
+            self.continuing_get_input(")", block, iter_count)
+        return block
+
+    def continuing_get_input(self, end_symbol, block, iter_count):
+        code = continue_input(iter_count)
+        while not code.endswith(end_symbol):
+            block.append(self.generate(code, iter_count + 1))
+            code = continue_input(iter_count)
+        block.append(code)
+
 
 class Block:
     ASSIGNMENT_RE = re.compile(r"(?P<vari>\w+)[ ]*:=[^=]+")

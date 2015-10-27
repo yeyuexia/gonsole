@@ -1,8 +1,40 @@
 # coding: utf8
 
 import unittest
+from unittest import mock
 
 from libs.block import Block
+from libs.block import BlockGenerator
+
+
+class TestBlockManager(unittest.TestCase):
+    def setUp(self):
+        self.block_generator = BlockGenerator()
+
+    def test_create_block_when_give_a_simple_code(self):
+        block = self.block_generator.generate("a := 222")
+
+        self.assertEqual(block.get_codes(), ["a := 222"])
+
+    @mock.patch("libs.block.continue_input")
+    def test_create_block_when_give_a_multi_line_code(self, patch_input):
+        patch_input.return_value = "i int}"
+        block = self.block_generator.generate("type Counter struct {")
+
+        self.assertEqual(
+            block.get_codes(), ["type Counter struct {", "i int}"]
+        )
+
+    @mock.patch("libs.block.continue_input")
+    def test_create_block_when_give_a_multi_line_code_with_bracket(
+        self, patch_input
+    ):
+        patch_input.return_value = "i)"
+        block = self.block_generator.generate("fmt.Println(")
+
+        self.assertEqual(
+            block.get_codes(), ["fmt.Println(", "i)"]
+        )
 
 
 class TestBlock(unittest.TestCase):
