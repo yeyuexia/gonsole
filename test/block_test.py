@@ -74,6 +74,13 @@ class TestBlock(unittest.TestCase):
 
         self.assertTrue(result)
 
+    def test_success_judge_is_declared_block_when_use_key_word_type(self):
+        block = Block("type Counter int")
+
+        result = block.is_declared()
+
+        self.assertTrue(result)
+
     def test_success_get_vari_when_use_key_word_var(self):
         block = Block("var a int64")
 
@@ -97,6 +104,14 @@ class TestBlock(unittest.TestCase):
 
         self.assertTrue("a" in varis)
         self.assertTrue(len(varis) == 1)
+
+    def test_success_get_vari_when_use_key_word_type(self):
+        block = Block("type Counter int")
+
+        varis = set(block.get_declared_varis())
+
+        self.assertTrue("Counter" in varis)
+        self.assertEqual(len(varis), 1)
 
 if __name__ == '__main__':
     unittest.main()

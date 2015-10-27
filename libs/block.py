@@ -6,8 +6,9 @@ from .const import STANDARD_SPACE
 
 
 class Block:
-    IS_ASSIGNMENT_RE = re.compile(r"(?P<vari>\w+)[ ]*:=[^=]+")
+    ASSIGNMENT_RE = re.compile(r"(?P<vari>\w+)[ ]*:=[^=]+")
     VARIABLE_DECLARE_RE = re.compile("(var|const) (?P<vari>\w+) ")
+    TYPE_DEFINE_RE = re.compile("type (?P<vari>\w+) *")
 
     def __init__(self, code):
         self.codes = [code]
@@ -51,7 +52,11 @@ class Block:
         ]
 
     def _get_declared_vari(self, code):
-        return self.VARIABLE_DECLARE_RE.match(code) or self.IS_ASSIGNMENT_RE.match(code)
+        return (
+            self.VARIABLE_DECLARE_RE.match(code) or
+            self.ASSIGNMENT_RE.match(code) or
+            self.TYPE_DEFINE_RE.match(code)
+        )
 
     def is_declared(self):
         return len(self.codes) == 1 and self._get_declared_vari(
