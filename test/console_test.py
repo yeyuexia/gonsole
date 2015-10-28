@@ -72,6 +72,17 @@ class TestConsole(unittest.TestCase):
 
         console.export.assert_called_once_with(code)
 
+    def test_give_a_direct_command_would_invoke_direct_method(self):
+        console = Console("")
+        console.direct_command = mock.MagicMock()
+        console._write_to_file = mock.MagicMock()
+        console.execute = mock.MagicMock()
+        code = "12 + 34"
+
+        console.parse_input(code)
+
+        console.direct_command.assert_called_once_with(code)
+
 
 class TestConsoleIntegration(unittest.TestCase):
 

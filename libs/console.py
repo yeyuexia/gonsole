@@ -1,9 +1,11 @@
 # coding: utf8
 
 import os
+import re
 import sys
 import subprocess
 
+from .const import PRINTLN
 from .block import BlockGenerator
 from .utils import continue_input
 from .utils import single_line_input
@@ -15,6 +17,7 @@ from .exceptions import NotDeclaredError
 
 
 class Console:
+    DIRECT_COMMAND_RE = re.compile(r"^(\d|\"|')+")
 
     def __init__(self, path):
         self.CACHE_FILE_PATH = self._generate_file_path(path)
@@ -43,7 +46,11 @@ class Console:
     def parse_input(self, text):
         if not text:
             return
-        if text == "exit":
+
+        execute_content = None
+        if self.DIRECT_COMMAND_RE.match(text):
+            execute_content = self.direct_command(text)
+        elif text == "exit":
             sys.exit(0)
         elif text.startswith("export "):
             self.export(text)
@@ -54,15 +61,26 @@ class Console:
         else:
             self.cache_code(text)
             try:
-                self.prepare()
+                execute_content = self.prepare()
             except NotDeclaredError:
                 print("parameter not declared")
                 self._rollback()
 
+        if execute_content:
+            self._write_to_file(self.CACHE_FILE_PATH, execute_content)
             self.execute()
 
+    def direct_command(self, command):
+        return self._template.replace(
+            "{%import_area%}", "\"fmt\""
+        ).replace(
+            "{%func_area%}", ""
+        ).replace(
+            "{%code_area%}", PRINTLN.format(command)
+        )
+
     def export(self, command):
-        self._write_to_file(command[7:].strip())
+        self._write_to_file(command[7:].strip(), self._inflate())
 
     def prepare(self):
         self.custom_methods.scan_used(self.codes.blocks)
@@ -74,16 +92,18 @@ class Console:
             not self.assignment_manager.get_all_assigned()
         ):
             raise NotDeclaredError
-        else:
-            self._write_to_file(self.CACHE_FILE_PATH)
+        return self._inflate()
 
-    def _write_to_file(self, file_path):
+    def _inflate(self):
+        return self.packages.inflate(
+            self.custom_methods.inflate(
+                self.codes.inflate(self._template)
+            )
+        )
+
+    def _write_to_file(self, file_path, content):
         with open(file_path, "w") as f:
-            f.write(self.packages.inflate(
-                self.custom_methods.inflate(
-                    self.codes.inflate(self._template)
-                )
-            ))
+            f.write(content)
 
     def execute(self):
         out, err = subprocess.Popen(
@@ -113,7 +133,9 @@ class Console:
 
     def cache_code(self, code):
         self.codes.clear()
-        self.codes.add(self.block_generator.generate(code))
+        block = self.block_generator.generate(code)
+        self.codes.add(block)
+        return not block.is_declared()
 
     def cache_func(self, code):
         self.custom_methods.add(self.block_generator.generate(code))
