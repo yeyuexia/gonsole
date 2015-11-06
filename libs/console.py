@@ -117,9 +117,9 @@ class Console:
         self.assignment_manager.clear()
 
     def _parse_err_message(self, err):
-        err = err.decode("utf8").split("\n")
-        print(err[0])
-        print(err[1].split(":", 1)[-1])
+        error_reason, detail = err.decode("utf8").split("\n")
+        print(error_reason)
+        print(detail.split(":", 1)[-1])
 
     def _rollback(self):
         self.codes.rollback()
