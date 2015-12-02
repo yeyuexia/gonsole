@@ -80,7 +80,7 @@ class Console:
         )
 
     def export(self, command):
-        self._write_to_file(command[7:].strip(), self._inflate())
+        self._write_to_file(command[7:].strip(), self.prepare())
 
     def prepare(self):
         self.custom_methods.scan_used(self.codes.blocks)
