@@ -1,6 +1,7 @@
 # coding: utf8
 
 import sys
+import requests
 
 from .const import STANDARD_SPACE
 
@@ -20,3 +21,8 @@ def compatibility_input(output):
         return input(output)
     else:
         return raw_input(output)
+
+
+def post_to_playground(context):
+    result = requests.post("https://play.golang.org/share", data=context)
+    return "https://play.golang.org/p/" + result.text

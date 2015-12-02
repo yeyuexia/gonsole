@@ -7,6 +7,7 @@ import subprocess
 
 from .const import PRINTLN
 from .block import BlockGenerator
+from .utils import post_to_playground
 from .utils import continue_input
 from .utils import single_line_input
 from .handlers import AssignmentManager
@@ -52,6 +53,8 @@ class Console:
             execute_content = self.direct_command(text)
         elif text == "exit":
             sys.exit(0)
+        elif text == "playground":
+            self.export_to_playground()
         elif text.startswith("export "):
             self.export(text)
         elif text.startswith("import "):
@@ -81,6 +84,9 @@ class Console:
 
     def export(self, command):
         self._write_to_file(command[7:].strip(), self.prepare())
+
+    def export_to_playground(self):
+        print(post_to_playground(self.prepare()))
 
     def prepare(self):
         self.custom_methods.scan_used(self.codes.blocks)
