@@ -184,16 +184,17 @@ class CodeHandler(Handler):
         scanned_varis = set()
 
         def scan_used_codes(used_varis):
-            scanned_varis.update(used_varis)
-            for varis in used_varis:
-                self.scan(self.get_declared()[varis])
-            used_names = set(self.get_assignments())
-            if scanned_varis != used_names:
-                scan_used_codes(used_names - scanned_varis)
+            if not used_varis:
+                return
+            for vari in used_varis:
+                scanned_varis.add(vari)
+                self.scan(self.get_declared()[vari])
+
+            scan_used_codes(set(self.get_assignments()) - scanned_varis)
 
         self.scan(self._pre_executed)
         scan_used_codes(set(self.get_assignments()))
-        self._generate_execute_blocks()
+        self._execute_blocks = self._generate_execute_blocks()
 
     def get_last(self):
         return self._pre_executed
@@ -202,11 +203,11 @@ class CodeHandler(Handler):
         self._blocks.append(block)
         self._pre_executed = block
 
-        if not block.is_declared():
-            self._scan_for_execute()
-        else:
-            for vari in block.get_declared_varis():
-                self.add_declared(vari, block)
+        def add_declareds(block):
+            [self.add_declared(vari, block)
+                for vari in block.get_declared_varis()]
+
+        add_declareds(block) if block.is_declared() else self._scan_for_execute()
 
     def rollback(self):
         self._blocks.pop()
@@ -222,7 +223,7 @@ class CodeHandler(Handler):
         return code.find(vari) == 0
 
     def _generate_execute_blocks(self):
-        self._execute_blocks = [
+        return [
             block for block in self._blocks if self.need_compile(block)
         ]
 
@@ -238,9 +239,14 @@ class CodeHandler(Handler):
     def need_compile(self, block):
         if block == self._pre_executed:
             return True
-        varis = list(self.get_assignments())
-        for code in block.parse_to_codes():
-            for vari in varis:
-                if self.is_assigned(vari, code):
-                    return True
-        return False
+
+        def check_has_assigned_vari(code):
+            return any([
+                self.is_assigned(vari, code)
+                for vari in self.get_assignments()
+            ])
+
+        return any([
+            check_has_assigned_vari(code)
+            for code in block.parse_to_codes()
+        ])
