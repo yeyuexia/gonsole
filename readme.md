@@ -49,15 +49,31 @@ invoke
 > fmt.Println(test)
 aaa
 ```
+exit
 
+```
+>exit
+```
+post your codes to playground to share
+
+```
+>playground
+https://play.golang.org/p/AbKuQywi_N
+```
 
 ## Command
 
 * `exit` exit gonsole
-* `export` export your code to target file
+* `export` export your codes to target file
 
 ```
 export demo.go
+```
+* `playground` post your codes to playground to share
+
+```
+>playground
+https://play.golang.org/p/AbKuQywi_N
 ```
 
 ## How it works
