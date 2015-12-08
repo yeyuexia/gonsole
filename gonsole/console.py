@@ -39,7 +39,14 @@ class Console:
 
     def run(self):
         while True:
-            self.parse_input(single_line_input())
+            try:
+                self.parse_input(single_line_input())
+            except KeyboardInterrupt:
+                self._exit()
+
+    def _exit(self):
+        print("exit")
+        sys.exit(0)
 
     def parse_input(self, text):
         if not text:
@@ -49,7 +56,7 @@ class Console:
         if self.DIRECT_COMMAND_RE.match(text):
             execute_content = self.direct_command(text)
         elif text == "exit":
-            sys.exit(0)
+            self._exit()
         elif text == "playground":
             self.export_to_playground()
         elif text.startswith("export "):
