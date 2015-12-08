@@ -157,12 +157,3 @@ class Console:
     def _cache_import(self, code):
         package = code.split(" ", 1)[-1].strip(' ,')
         self.packages.add(package)
-
-
-def execute():
-    console = Console()
-    console.run()
-
-
-if __name__ == "__main__":
-    execute()
