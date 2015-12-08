@@ -1,12 +1,11 @@
 # coding: utf8
 import unittest
 
-from libs.block import Block
-from libs.handlers import CodeHandler
-from libs.handlers import PackageHandler
-from libs.handlers import FunctionHandler
-from libs.handlers import AssignmentManager
-from libs.exceptions import NotDeclaredError
+from gonsole.block import Block
+from gonsole.handlers import CodeHandler
+from gonsole.handlers import PackageHandler
+from gonsole.handlers import FunctionHandler
+from gonsole.handlers import AssignmentManager
 
 
 class TestAssignmentManager(unittest.TestCase):

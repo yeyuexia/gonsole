@@ -5,7 +5,7 @@ import re
 import sys
 import subprocess
 
-from .const import PRINTLN
+from .const import PRINTLN, GO_TEMPLATE
 from .block import BlockGenerator
 from .utils import post_to_playground
 from .utils import continue_input
@@ -20,21 +20,18 @@ from .exceptions import NotDeclaredError
 class Console:
     DIRECT_COMMAND_RE = re.compile(r"^(\d|\"|')+")
 
-    def __init__(self, path):
-        self.CACHE_FILE_PATH = self._generate_file_path(path)
-        self.GO_CODE_TEMPLATE = os.path.join(path, 'go_template')
-
-        with open(self.GO_CODE_TEMPLATE) as f:
-            self._template = f.read()
+    def __init__(self):
+        self.CACHE_FILE_PATH = self._generate_file_path()
+        self._template = GO_TEMPLATE
         self.codes = CodeHandler()
         self.packages = PackageHandler()
         self.custom_methods = FunctionHandler()
         self.assignment_manager = AssignmentManager.instance()
         self.block_generator = BlockGenerator()
 
-    def _generate_file_path(self, path):
+    def _generate_file_path(self):
         file_path = os.path.join(
-            path, 'console', '_cache'
+            "", "tmp", "console", "_cache"
         )
         if not os.path.exists(file_path):
             os.makedirs(file_path)
@@ -160,3 +157,12 @@ class Console:
     def _cache_import(self, code):
         package = code.split(" ", 1)[-1].strip(' ,')
         self.packages.add(package)
+
+
+def execute():
+    console = Console()
+    console.run()
+
+
+if __name__ == "__main__":
+    execute()

@@ -3,17 +3,17 @@
 import unittest
 from unittest import mock
 
-from libs.console import Console
-from libs.block import Block
+from gonsole.console import Console
+from gonsole.block import Block
 
-from libs.exceptions import NotDeclaredError
+from gonsole.exceptions import NotDeclaredError
 
 
 class TestConsole(unittest.TestCase):
 
     @mock.patch('sys.exit')
     def test_invoke_sys_exit_when_given_code_exit(self, mock_exit):
-        console = Console('')
+        console = Console()
 
         console.parse_input('exit')
 
@@ -21,7 +21,7 @@ class TestConsole(unittest.TestCase):
 
     def test_console_import_code_with_single_import(self):
         code = 'import "yyx"'
-        console = Console('')
+        console = Console()
 
         console.parse_input(code)
 
@@ -34,7 +34,7 @@ class TestConsole(unittest.TestCase):
 
     def test_could_not_import_same_package_multi_times(self):
         code = 'import "fmt"'
-        console = Console('')
+        console = Console()
         console.packages.assignment_manager.get_all_declared().clear()
 
         console.parse_input(code)
@@ -48,14 +48,14 @@ class TestConsole(unittest.TestCase):
         )
 
     def test_console_nothing_if_give_empty_str(self):
-        console = Console('')
+        console = Console()
 
         console.parse_input('')
 
         self.assertEqual(len(console.codes.blocks), 0)
 
     def test_handle_function_when_code_was_start_with_func(self):
-        console = Console("")
+        console = Console()
         console.cache_func = mock.MagicMock()
         code = "func test():"
 
@@ -64,7 +64,7 @@ class TestConsole(unittest.TestCase):
         console.cache_func.assert_called_once_with(code)
 
     def test_call_export_when_input_export_command(self):
-        console = Console("")
+        console = Console()
         console.export = mock.MagicMock()
         code = "export test"
 
@@ -73,7 +73,7 @@ class TestConsole(unittest.TestCase):
         console.export.assert_called_once_with(code)
 
     def test_give_a_direct_command_would_invoke_direct_method(self):
-        console = Console("")
+        console = Console()
         console.direct_command = mock.MagicMock()
         console._write_to_file = mock.MagicMock()
         console.execute = mock.MagicMock()
@@ -87,7 +87,7 @@ class TestConsole(unittest.TestCase):
 class TestConsoleIntegration(unittest.TestCase):
 
     def test_if_a_variable_not_declared_before_should_raise_error(self):
-        console = Console("")
+        console = Console()
         console.assignment_manager.clear()
 
         console.codes.add(Block("b = 2"))
@@ -95,7 +95,7 @@ class TestConsoleIntegration(unittest.TestCase):
             console.prepare()
 
     def test_defined_method_but_not_call_it_should_not_assigned(self):
-        console = Console("")
+        console = Console()
         console.assignment_manager.clear()
         block = Block("func a(i int) {")
         block.append(Block("fmt.Println(i)"))
@@ -110,7 +110,7 @@ class TestConsoleIntegration(unittest.TestCase):
         self.assertEqual(len(console.custom_methods.methods), 0)
 
     def test_pre_define_vari_a_then_overload_a_as_method_should_change_assignment(self):
-        console = Console("")
+        console = Console()
         console.assignment_manager.clear()
         block = Block("func a(i int) {")
         block.append(Block("fmt.Println(i)"))
@@ -128,7 +128,7 @@ class TestConsoleIntegration(unittest.TestCase):
         self.assertTrue("a" in console.custom_methods.get_assignments())
 
     def test_if_invoke_vari_could_get_the_vari_declared(self):
-        console = Console("")
+        console = Console()
         console.assignment_manager.clear()
 
         console.codes.add(Block("a := 1"))
