@@ -1,13 +1,29 @@
-# Weclome to gonsole
-gonsole is a terminal for Golang for who is learning Golang. Like Python terminal, you can try your code and get output directly. 
+# Weclome to Gonsole
+gonsole is a terminal for Golang for who is learning Golang. Like Python terminal, you can try your code and get output directly.
+
+## Prepare
+make sure install Golang in your computer before use Gonsole.
+
+## Install
+run setup.py
+
+```
+python setup.py install
+``` 
 
 ## Usage
 
 run gonsole.py to enter terminal
 
 ```
-python gonsole.py
+python gonsole/gonsole.py
 ```
+or just run `gonsole`
+
+```
+gonsole
+```
+
 in terminal, you can try your codes like this:
 
 ```
