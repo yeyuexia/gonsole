@@ -6,7 +6,7 @@ import sys
 import subprocess
 
 from .const import PRINTLN, GO_TEMPLATE
-from .block import BlockGenerator
+from .block import BlockGenerator, KeyboardInterruptInBlock
 from .utils import post_to_playground
 from .utils import continue_input
 from .utils import single_line_input
@@ -41,6 +41,8 @@ class Console:
         while True:
             try:
                 self.parse_input(single_line_input())
+            except KeyboardInterruptInBlock:
+                continue
             except KeyboardInterrupt:
                 self._exit()
 

@@ -7,13 +7,20 @@ from .const import STANDARD_SPACE
 from .utils import continue_input
 
 
+class KeyboardInterruptInBlock(Exception):
+    pass
+
+
 class BlockGenerator:
     def generate(self, code, iter_count=1):
-        block = Block(code)
-        if code.strip().endswith("{"):
-            self.continuing_get_input("}", block, iter_count)
-        elif code.strip().endswith("("):
-            self.continuing_get_input(")", block, iter_count)
+        try:
+            block = Block(code)
+            if code.strip().endswith("{"):
+                self.continuing_get_input("}", block, iter_count)
+            elif code.strip().endswith("("):
+                self.continuing_get_input(")", block, iter_count)
+        except KeyboardInterrupt:
+            raise KeyboardInterruptInBlock()
         return block
 
     def continuing_get_input(self, end_symbol, block, iter_count):
