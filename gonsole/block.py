@@ -32,9 +32,9 @@ class BlockGenerator:
 
 
 class Block:
-    ASSIGNMENT_RE = re.compile(r"(?P<vari>\w+)[ ]*:=[^=]+")
-    VARIABLE_DECLARE_RE = re.compile("(var|const) (?P<vari>\w+) ")
-    TYPE_DEFINE_RE = re.compile("type (?P<vari>\w+) *")
+    VARIABLE_DECLARE_RE = re.compile("(var|const) (?P<varis>_?\w+(, ?)?_?\w*)( \w+)?(( )*=)?")
+    BATCH_VARIABLE_DECLARED_RE = re.compile(r"(var|const)[ ]*\(")
+    TYPE_DEFINE_RE = re.compile("type (?P<var>\w+) *")
 
     def __init__(self, code):
         self.codes = [code]
@@ -44,12 +44,6 @@ class Block:
 
     def inflate_space(self, code, indent):
         return STANDARD_SPACE * indent + code
-
-    def get_declared_varis(self):
-        for code in self.get_codes():
-            result = self._get_declared_vari(code)
-            if result:
-                yield result.group("vari")
 
     def get_codes(self):
         codes = []
@@ -77,17 +71,46 @@ class Block:
             if code and not NOT_REAL_CODES_RE.match(code)
         ]
 
+    def get_declared_symbol_or_keyword(self, code):
+        if ":=" in code:
+            return ":="
+        if code.startswith("var "):
+            return "var"
+        if code.startswith("const "):
+            return "const"
+        if code.startswith("type "):
+            return "type"
+
     def _get_declared_vari(self, code):
-        return (
-            self.VARIABLE_DECLARE_RE.match(code) or
-            self.ASSIGNMENT_RE.match(code) or
-            self.TYPE_DEFINE_RE.match(code)
-        )
+        result = self.get_declared_symbol_or_keyword(code)
+        if result:
+            if result == ":=":
+                return [var.strip() for var in code.split(":=")[0].split(",") if var]
+            if result == "var" or result == "const":
+                varis = self.VARIABLE_DECLARE_RE.match(code).group("varis")
+                return [var.strip() for var in varis.split(",") if var]
+            if result == "type":
+                return [self.TYPE_DEFINE_RE.match(code).group("var")]
+
+    def get_declared_varis(self):
+        varis = []
+        codes = self.codes[0].split(";")
+        if len(self.codes) == 1:
+            for code in self._filter_real_codes(codes):
+                _varis = self._get_declared_vari(code)
+                if _varis:
+                    varis.extend(_varis)
+        else:
+            if self.BATCH_VARIABLE_DECLARED_RE.match(codes[-1]):
+                varis.extend(
+                    [var.strip() for var in self.codes[1].get_codes()]
+                )
+        return varis
 
     def is_declared(self):
-        return len(self.codes) == 1 and self._get_declared_vari(
+        return self.get_declared_symbol_or_keyword(
             self._filter_real_codes(self.codes[0].split(";"))[-1]
-        ) and True
+        ) and True or False
 
     def _parse_code_with_symbols(self, code, symbols):
         if len(symbols) <= 0:
