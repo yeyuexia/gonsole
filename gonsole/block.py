@@ -32,9 +32,11 @@ class BlockGenerator:
 
 
 class Block:
-    VARIABLE_DECLARE_RE = re.compile("(var|const) (?P<varis>_?\w+(, ?)?_?\w*)( \w+)?(( )*=)?")
+    VARIABLE_DECLARE_RE = re.compile("(var|const) (?P<varis>[_\w]+(, *[_\w]+)*)( [_\w]+)?(( )*=)?[^(]*")
     BATCH_VARIABLE_DECLARED_RE = re.compile(r"(var|const)[ ]*\(")
     TYPE_DEFINE_RE = re.compile("type (?P<var>\w+) *")
+    DECLARE_KEYWORD = re.compile("^(?P<keyword>(const|var|type)) ")
+    BATCH_DECLARE_RE = re.compile("(?P<var>[_\w]+) *=")
 
     def __init__(self, code):
         self.codes = [code]
@@ -48,19 +50,20 @@ class Block:
     def get_codes(self):
         codes = []
         for code in self.codes:
-            if isinstance(code, Block):
+            (
                 codes.extend(code.get_codes())
-            else:
-                codes.append(code)
+                if isinstance(code, Block) else codes.append(code)
+            )
         return codes
 
     def deflate(self, indent=0):
         codes = []
         for code in self.codes:
-            if isinstance(code, Block):
+            (
                 codes.extend(code.deflate(indent+1))
-            else:
-                codes.append(self.inflate_space(code, indent))
+                if isinstance(code, Block)
+                else codes.append(self.inflate_space(code, indent))
+            )
         return codes
 
     def _filter_real_codes(self, codes):
@@ -74,14 +77,11 @@ class Block:
     def get_declared_symbol_or_keyword(self, code):
         if ":=" in code:
             return ":="
-        if code.startswith("var "):
-            return "var"
-        if code.startswith("const "):
-            return "const"
-        if code.startswith("type "):
-            return "type"
+        result = self.DECLARE_KEYWORD.match(code)
+        if result:
+            return result.group("keyword")
 
-    def _get_declared_vari(self, code):
+    def _get_declared_varis(self, code):
         result = self.get_declared_symbol_or_keyword(code)
         if result:
             if result == ":=":
@@ -92,19 +92,21 @@ class Block:
             if result == "type":
                 return [self.TYPE_DEFINE_RE.match(code).group("var")]
 
+    def _get_batch_declared_var(self, code):
+        return self.BATCH_DECLARE_RE.match(code).group("var")
+
     def get_declared_varis(self):
         varis = []
         codes = self.codes[0].split(";")
-        if len(self.codes) == 1:
-            for code in self._filter_real_codes(codes):
-                _varis = self._get_declared_vari(code)
-                if _varis:
-                    varis.extend(_varis)
-        else:
-            if self.BATCH_VARIABLE_DECLARED_RE.match(codes[-1]):
-                varis.extend(
-                    [var.strip() for var in self.codes[1].get_codes()]
-                )
+        if self.BATCH_VARIABLE_DECLARED_RE.match(codes[-1]):
+            varis.extend(
+                [self._get_batch_declared_var(var.strip())
+                    for var in self.codes[1].get_codes()]
+            )
+        for code in self._filter_real_codes(codes):
+            _varis = self._get_declared_varis(code)
+            if _varis:
+                varis.extend(_varis)
         return varis
 
     def is_declared(self):
