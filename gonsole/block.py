@@ -44,7 +44,8 @@ class Block:
     def append(self, code):
         self.codes.append(code)
 
-    def inflate_space(self, code, indent):
+    @classmethod
+    def inflate_space(cls, code, indent):
         return STANDARD_SPACE * indent + code
 
     def get_codes(self):
@@ -66,7 +67,8 @@ class Block:
             )
         return codes
 
-    def _filter_real_codes(self, codes):
+    @classmethod
+    def _filter_real_codes(cls, codes):
         NOT_REAL_CODES_RE = re.compile(r"(\"|'|\d)+")
         return [
             code
@@ -74,26 +76,31 @@ class Block:
             if code and not NOT_REAL_CODES_RE.match(code)
         ]
 
-    def get_declared_symbol_or_keyword(self, code):
+    @classmethod
+    def get_declared_symbol_or_keyword(cls, code):
         if ":=" in code:
             return ":="
-        result = self.DECLARE_KEYWORD.match(code)
-        if result:
-            return result.group("keyword")
+        result = cls.DECLARE_KEYWORD.match(code)
+        return result.group("keyword") if result else None
 
-    def _get_declared_varis(self, code):
-        result = self.get_declared_symbol_or_keyword(code)
-        if result:
-            if result == ":=":
-                return [var.strip() for var in code.split(":=")[0].split(",") if var]
-            if result == "var" or result == "const":
-                varis = self.VARIABLE_DECLARE_RE.match(code).group("varis")
-                return [var.strip() for var in varis.split(",") if var]
-            if result == "type":
-                return [self.TYPE_DEFINE_RE.match(code).group("var")]
+    @classmethod
+    def _get_declared_varis(cls, code):
 
-    def _get_batch_declared_var(self, code):
-        return self.BATCH_DECLARE_RE.match(code).group("var")
+        def get_vari_by_keyword_var_or_const(code):
+            varis = cls.VARIABLE_DECLARE_RE.match(code).group("varis")
+            return [var.strip() for var in varis.split(",") if var]
+
+        return {
+            ":=": lambda code: [var.strip() for var in code.split(":=")[0].split(",") if var],
+            "var": lambda code: get_vari_by_keyword_var_or_const(code),
+            "const": lambda code: get_vari_by_keyword_var_or_const(code),
+            "type": lambda code: [cls.TYPE_DEFINE_RE.match(code).group("var")],
+            None: lambda x: None
+        }.get(cls.get_declared_symbol_or_keyword(code))(code)
+
+    @classmethod
+    def _get_batch_declared_var(cls, code):
+        return cls.BATCH_DECLARE_RE.match(code).group("var")
 
     def get_declared_varis(self):
         varis = []
@@ -114,16 +121,17 @@ class Block:
             self._filter_real_codes(self.codes[0].split(";"))[-1]
         ) and True or False
 
-    def _parse_code_with_symbols(self, code, symbols):
+    @classmethod
+    def _parse_code_with_symbols(cls, code, symbols):
         if len(symbols) <= 0:
             return [code.strip()]
         if code.find(symbols[0]) == -1:
-            return self._parse_code_with_symbols(code, symbols[1:])
+            return cls._parse_code_with_symbols(code, symbols[1:])
 
         codes = [code]
         for c in code.split(symbols[0]):
             codes.extend(
-                self._parse_code_with_symbols(c.strip(') '), symbols[1:])
+                cls._parse_code_with_symbols(c.strip(') '), symbols[1:])
             )
         return codes
 
