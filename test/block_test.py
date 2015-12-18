@@ -16,7 +16,7 @@ class TestBlockManager(unittest.TestCase):
 
         self.assertEqual(block.get_codes(), ["a := 222"])
 
-    @mock.patch("gonsole.block.continue_input")
+    @mock.patch("gonsole.block.block.continue_input")
     def test_create_block_when_give_a_multi_line_code(self, patch_input):
         patch_input.return_value = "i int}"
         block = self.block_generator.generate("type Counter struct {")
@@ -25,7 +25,7 @@ class TestBlockManager(unittest.TestCase):
             block.get_codes(), ["type Counter struct {", "i int}"]
         )
 
-    @mock.patch("gonsole.block.continue_input")
+    @mock.patch("gonsole.block.block.continue_input")
     def test_create_block_when_give_a_multi_line_code_with_bracket(
         self, patch_input
     ):

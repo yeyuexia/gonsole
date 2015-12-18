@@ -2,9 +2,13 @@
 
 import re
 
-from .const import STANDARD_SPACE
-
-from .utils import continue_input
+from gonsole.utils import continue_input, inflate_space
+from .codes import filter_real_codes
+from .declared import (
+    get_declared_varis,
+    get_declared_symbol,
+    get_batch_declared_varis
+)
 
 
 class KeyboardInterruptInBlock(Exception):
@@ -44,10 +48,6 @@ class Block:
     def append(self, code):
         self.codes.append(code)
 
-    @classmethod
-    def inflate_space(cls, code, indent):
-        return STANDARD_SPACE * indent + code
-
     def get_codes(self):
         codes = []
         for code in self.codes:
@@ -63,40 +63,9 @@ class Block:
             (
                 codes.extend(code.deflate(indent+1))
                 if isinstance(code, Block)
-                else codes.append(self.inflate_space(code, indent))
+                else codes.append(inflate_space(code, indent))
             )
         return codes
-
-    @classmethod
-    def _filter_real_codes(cls, codes):
-        NOT_REAL_CODES_RE = re.compile(r"(\"|'|\d)+")
-        return [
-            code
-            for code in codes
-            if code and not NOT_REAL_CODES_RE.match(code)
-        ]
-
-    @classmethod
-    def get_declared_symbol_or_keyword(cls, code):
-        if ":=" in code:
-            return ":="
-        result = cls.DECLARE_KEYWORD.match(code)
-        return result.group("keyword") if result else None
-
-    @classmethod
-    def _get_declared_varis(cls, code):
-
-        def get_vari_by_keyword_var_or_const(code):
-            varis = cls.VARIABLE_DECLARE_RE.match(code).group("varis")
-            return [var.strip() for var in varis.split(",") if var]
-
-        return {
-            ":=": lambda code: [var.strip() for var in code.split(":=")[0].split(",") if var],
-            "var": lambda code: get_vari_by_keyword_var_or_const(code),
-            "const": lambda code: get_vari_by_keyword_var_or_const(code),
-            "type": lambda code: [cls.TYPE_DEFINE_RE.match(code).group("var")],
-            None: lambda x: None
-        }.get(cls.get_declared_symbol_or_keyword(code))(code)
 
     @classmethod
     def _get_batch_declared_var(cls, code):
@@ -104,21 +73,14 @@ class Block:
 
     def get_declared_varis(self):
         varis = []
-        codes = self.codes[0].split(";")
-        if self.BATCH_VARIABLE_DECLARED_RE.match(codes[-1]):
-            varis.extend(
-                [self._get_batch_declared_var(var.strip())
-                    for var in self.codes[1].get_codes()]
-            )
-        for code in self._filter_real_codes(codes):
-            _varis = self._get_declared_varis(code)
-            if _varis:
-                varis.extend(_varis)
+        varis.extend(get_batch_declared_varis(self.codes))
+        for code in self.codes:
+            varis.extend(get_declared_varis(code))
         return varis
 
     def is_declared(self):
-        return self.get_declared_symbol_or_keyword(
-            self._filter_real_codes(self.codes[0].split(";"))[-1]
+        return get_declared_symbol(
+            filter_real_codes(self.codes[0].split(";"))[-1]
         ) and True or False
 
     @classmethod
@@ -141,4 +103,4 @@ class Block:
         for code in self.get_codes():
             codes.extend(self._parse_code_with_symbols(code, SPLIT_SYMBOL))
 
-        return self._filter_real_codes(codes)
+        return filter_real_codes(codes)

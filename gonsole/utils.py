@@ -16,6 +16,10 @@ def continue_input(iter_count=1):
     return compatibility_input(STANDARD_SPACE*iter_count).strip()
 
 
+def inflate_space(code, indent):
+    return STANDARD_SPACE * indent + code
+
+
 def compatibility_input(output):
     if IS_PY3:
         return input(output)
