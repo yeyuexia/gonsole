@@ -2,7 +2,7 @@
 
 import re
 
-from gonsole.utils import continue_input, inflate_space
+from gonsole.utils import inflate_space
 from .codes import filter_real_codes
 from .declared import (
     get_declared_varis,
@@ -16,6 +16,9 @@ class KeyboardInterruptInBlock(Exception):
 
 
 class BlockGenerator:
+    def __init__(self, continue_input):
+        self.continue_input = continue_input
+
     def generate(self, code, iter_count=1):
         try:
             block = Block(code)
@@ -28,10 +31,10 @@ class BlockGenerator:
         return block
 
     def continuing_get_input(self, end_symbol, block, iter_count):
-        code = continue_input(iter_count)
+        code = self.continue_input(iter_count)
         while not code.endswith(end_symbol):
             block.append(self.generate(code, iter_count + 1))
-            code = continue_input(iter_count)
+            code = self.continue_input(iter_count)
         block.append(code)
 
 
@@ -47,6 +50,9 @@ class Block:
 
     def append(self, code):
         self.codes.append(code)
+
+    def is_func(self):
+        return self.codes[0].startswith("func ")
 
     def get_codes(self):
         codes = []

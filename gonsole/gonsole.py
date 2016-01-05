@@ -4,7 +4,7 @@ from gonsole.console import Console
 
 
 def execute():
-    Console().run()
+    Console().loop()
 
 
 if __name__ == '__main__':

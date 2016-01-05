@@ -15,7 +15,7 @@ class TestConsole(unittest.TestCase):
     def test_invoke_sys_exit_when_given_code_exit(self, mock_exit):
         console = Console()
 
-        console.parse_input('exit')
+        console._run('exit')
 
         mock_exit.assert_called_once_with(0)
 
@@ -23,7 +23,7 @@ class TestConsole(unittest.TestCase):
         code = 'import "yyx"'
         console = Console()
 
-        console.parse_input(code)
+        console._run(code)
 
         self.assertEqual(
             len(console.packages.get_declared()), 2
@@ -37,8 +37,8 @@ class TestConsole(unittest.TestCase):
         console = Console()
         console.packages.assignment_manager.get_all_declared().clear()
 
-        console.parse_input(code)
-        console.parse_input(code)
+        console._run(code)
+        console._run(code)
 
         self.assertEqual(
             len(console.packages.get_declared()), 1
@@ -47,30 +47,23 @@ class TestConsole(unittest.TestCase):
             "fmt" in console.packages.get_declared()
         )
 
-    def test_console_nothing_if_give_empty_str(self):
-        console = Console()
-
-        console.parse_input('')
-
-        self.assertEqual(len(console.codes.blocks), 0)
-
     def test_handle_function_when_code_was_start_with_func(self):
         console = Console()
-        console.cache_func = mock.MagicMock()
-        code = "func test():"
+        console.custom_methods = mock.MagicMock()
+        code = "func test()"
 
-        console.parse_input(code)
+        console._run(code)
 
-        console.cache_func.assert_called_once_with(code)
+        console.custom_methods.add.assert_called_once()
 
     def test_call_export_when_input_export_command(self):
         console = Console()
-        console.export = mock.MagicMock()
+        console.do_export = mock.MagicMock()
         code = "export test"
 
-        console.parse_input(code)
+        console._run(code)
 
-        console.export.assert_called_once_with(code)
+        console.do_export.assert_called_once_with(*code.split())
 
     def test_give_a_direct_command_would_invoke_direct_method(self):
         console = Console()
@@ -79,7 +72,7 @@ class TestConsole(unittest.TestCase):
         console.execute = mock.MagicMock()
         code = "12 + 34"
 
-        console.parse_input(code)
+        console.try_run_direct_command(code)
 
         console.direct_command.assert_called_once_with(code)
 

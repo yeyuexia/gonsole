@@ -8,29 +8,26 @@ from gonsole.block import BlockGenerator
 
 
 class TestBlockManager(unittest.TestCase):
-    def setUp(self):
-        self.block_generator = BlockGenerator()
 
     def test_create_block_when_give_a_simple_code(self):
-        block = self.block_generator.generate("a := 222")
+        block_generator = BlockGenerator(None)
+        block = block_generator.generate("a := 222")
 
         self.assertEqual(block.get_codes(), ["a := 222"])
 
-    @mock.patch("gonsole.block.block.continue_input")
-    def test_create_block_when_give_a_multi_line_code(self, patch_input):
-        patch_input.return_value = "i int}"
-        block = self.block_generator.generate("type Counter struct {")
+    def test_create_block_when_give_a_multi_line_code(self):
+        patch_input = mock.MagicMock(return_value="i int}")
+        block_generator = BlockGenerator(patch_input)
+        block = block_generator.generate("type Counter struct {")
 
         self.assertEqual(
             block.get_codes(), ["type Counter struct {", "i int}"]
         )
 
-    @mock.patch("gonsole.block.block.continue_input")
-    def test_create_block_when_give_a_multi_line_code_with_bracket(
-        self, patch_input
-    ):
-        patch_input.return_value = "i)"
-        block = self.block_generator.generate("fmt.Println(")
+    def test_create_block_when_give_a_multi_line_code_with_bracket(self):
+        patch_input = mock.MagicMock(return_value="i)")
+        block_generator = BlockGenerator(patch_input)
+        block = block_generator.generate("fmt.Println(")
 
         self.assertEqual(
             block.get_codes(), ["fmt.Println(", "i)"]
