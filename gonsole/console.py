@@ -1,6 +1,7 @@
 # coding: utf8
 
 import os
+import re
 import subprocess
 
 from .cmd import Cmd
@@ -11,6 +12,9 @@ from .handlers import CodeHandler
 from .handlers import PackageHandler
 from .handlers import FunctionHandler
 from .exceptions import NotDeclaredError
+
+
+error_detail_re = re.compile("_cache/main.go:\d+: (?P<detail>.*)$")
 
 
 class Console(Cmd):
@@ -110,8 +114,15 @@ class Console(Cmd):
         return self._parse_output(out, err)
 
     def _parse_err_message(self, err):
-        error_reason, detail = err.decode("utf8").strip().split("\n")
-        return "\n".join(error_reason, detail.split(":")[-1])
+        err = err.decode("utf8").strip()
+        messages = err.split("\n")
+        if len(messages) == 2:
+            error_reason, detail = messages
+            return "\n".join(
+                [error_reason, error_detail_re.search(detail).group("detail")]
+            )
+        else:
+            return messages[0]
 
     def _rollback(self):
         self.codes.rollback()

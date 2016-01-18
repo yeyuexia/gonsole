@@ -245,7 +245,6 @@ class CodeHandler(Handler):
                 self.is_assigned(vari, code)
                 for vari in self.get_assignments()
             ])
-
         return any([
             check_has_assigned_vari(code)
             for code in block.parse_to_codes()

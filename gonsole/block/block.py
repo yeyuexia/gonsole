@@ -104,7 +104,7 @@ class Block:
         return codes
 
     def parse_to_codes(self):
-        SPLIT_SYMBOL = [',', ';', '(', '=', '+', '-', '*', '/']
+        SPLIT_SYMBOL = [' ', ',', ';', '(', '=', '+', '-', '*', '/']
         codes = []
         for code in self.get_codes():
             codes.extend(self._parse_code_with_symbols(code, SPLIT_SYMBOL))
