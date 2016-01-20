@@ -13,8 +13,8 @@ class AssignmentManager:
     _lock = threading.Lock()
 
     def __init__(self):
-        self.assignments = dict()
-        self.declared_assignments = dict()
+        self.assigned_params = dict()
+        self.declared_params = dict()
 
     @classmethod
     def instance(cls):
@@ -24,35 +24,35 @@ class AssignmentManager:
                     cls._instance = AssignmentManager()
         return cls._instance
 
-    def add_assignment(self, assignment, assignment_type):
-        self.assignments[assignment] = assignment_type
+    def add_assigned(self, param, param_type):
+        self.assigned_params[param] = param_type
 
-    def add_declared(self, assignment_type, assignment, codes):
-        self.declared_assignments[assignment] = (assignment_type, codes)
+    def add_declared(self, handler_type, name, codes):
+        self.declared_params[name] = (handler_type, codes)
 
-    def get_assigned(self, assignment_type):
-        for assignment, _type in self.assignments.items():
-            if _type == assignment_type:
+    def get_assigned(self, handler_type):
+        for assignment, _type in self.assigned_params.items():
+            if _type == handler_type:
                 yield assignment
 
     def get_all_assigned(self):
-        return self.assignments.keys()
+        return self.assigned_params.keys()
 
     def get_all_declared(self):
-        return self.declared_assignments
+        return self.declared_params
 
     def get_declared(self, assignment_type):
         declareds = dict()
-        for name, value in self.declared_assignments.items():
+        for name, value in self.declared_params.items():
             if value[0] == assignment_type:
                 declareds[name] = value[1]
         return declareds
 
     def clear(self):
-        self.assignments.clear()
+        self.assigned_params.clear()
 
     def length(self):
-        return len(self.assignments)
+        return len(self.assigned_params)
 
 
 class Handler(object):  # for compatibility to python 2.x
@@ -66,7 +66,7 @@ class Handler(object):  # for compatibility to python 2.x
         for code in block.parse_to_codes():
             for name in self.get_declared():
                 if self.is_assigned(name, code):
-                    self.assignment_manager.add_assignment(
+                    self.assignment_manager.add_assigned(
                         name, self.handler_type
                     )
 
@@ -86,7 +86,7 @@ class Handler(object):  # for compatibility to python 2.x
     def inflate(self, template):
         return template.replace(self.template, self.parse_codes())
 
-    def get_assignments(self):
+    def get_params(self):
         return self.assignment_manager.get_assigned(self.handler_type)
 
     def add_declared(self, name, codes):
@@ -122,7 +122,7 @@ class PackageHandler(Handler):
     def parse_codes(self):
         return "\n".join(
             self._format(name)
-            for name in self.get_assignments()
+            for name in self.get_params()
         )
 
     def _format(self, package):
@@ -139,7 +139,7 @@ class FunctionHandler(Handler):
 
     @property
     def methods(self):
-        return [self.get_declared()[name] for name in self.get_assignments()]
+        return [self.get_declared()[name] for name in self.get_params()]
 
     def add(self, method):
         method_name = self._get_method_name(method)
@@ -156,7 +156,7 @@ class FunctionHandler(Handler):
 
     def _assemble(self):
         for name, method in self.get_declared().items():
-            if name in self.get_assignments():
+            if name in self.get_params():
                 yield self._assemble_method(method)
 
     def is_assigned(self, method, code):
@@ -190,10 +190,10 @@ class CodeHandler(Handler):
                 scanned_varis.add(vari)
                 self.scan(self.get_declared()[vari])
 
-            scan_used_codes(set(self.get_assignments()) - scanned_varis)
+            scan_used_codes(set(self.get_params()) - scanned_varis)
 
         self.scan(self._pre_executed)
-        scan_used_codes(set(self.get_assignments()))
+        scan_used_codes(set(self.get_params()))
         self._execute_blocks = self._generate_execute_blocks()
 
     def get_last(self):
@@ -237,10 +237,10 @@ class CodeHandler(Handler):
         return "\n".join(list(self._deflate_block(self.blocks)))
 
     def get_propable_params(self, block):
-        for vari in self.get_assignments():
-            index = self._blocks.index(self.get_declared()[vari])
+        for param in self.get_params():
+            index = self._blocks.index(self.get_declared()[param])
             if index <= self._blocks.index(block):
-                yield vari
+                yield param
 
     def need_compile(self, block):
         if block == self._pre_executed:

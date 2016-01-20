@@ -117,8 +117,8 @@ class TestConsoleIntegration(unittest.TestCase):
             console.codes.blocks + console.custom_methods.methods
         )
 
-        self.assertTrue("a" not in console.codes.get_assignments())
-        self.assertTrue("a" in console.custom_methods.get_assignments())
+        self.assertTrue("a" not in console.codes.get_params())
+        self.assertTrue("a" in console.custom_methods.get_params())
 
     def test_if_invoke_vari_could_get_the_vari_declared(self):
         console = Console()
@@ -128,7 +128,7 @@ class TestConsoleIntegration(unittest.TestCase):
         console.codes.add(Block('b := "hello"'))
         console.codes.add(Block('c := b + "?"'))
         console.codes.add(Block('a++'))
-        self.assertTrue("a" in console.codes.get_assignments())
+        self.assertTrue("a" in console.codes.get_params())
         self.assertTrue(
             "a" in console.assignment_manager.get_all_assigned()
         )

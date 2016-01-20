@@ -12,24 +12,24 @@ class TestAssignmentManager(unittest.TestCase):
     def setUp(self):
         self.handler = AssignmentManager.instance()
 
-    def test_should_add_assignment(self):
-        self.handler.assignments = dict()
+    def test_should_add_assigned(self):
+        self.handler.assigned_params = dict()
 
-        self.handler.add_assignment("x", "aa")
+        self.handler.add_assigned("x", "aa")
 
-        self.assertEquals(len(self.handler.assignments), 1)
-        self.assertTrue("x" in self.handler.assignments)
-        self.assertEquals(self.handler.assignments["x"], "aa")
+        self.assertEquals(len(self.handler.assigned_params), 1)
+        self.assertTrue("x" in self.handler.assigned_params)
+        self.assertEquals(self.handler.assigned_params["x"], "aa")
 
     def test_should_override_assignment_when_has_same_name(self):
-        self.handler.assignments = dict()
-        self.handler.assignments["x"] = "aa"
+        self.handler.assigned_params = dict()
+        self.handler.assigned_params["x"] = "aa"
 
-        self.handler.add_assignment("x", "bb")
+        self.handler.add_assigned("x", "bb")
 
-        self.assertEquals(len(self.handler.assignments), 1)
-        self.assertTrue("x" in self.handler.assignments)
-        self.assertEquals(self.handler.assignments["x"], "bb")
+        self.assertEquals(len(self.handler.assigned_params), 1)
+        self.assertTrue("x" in self.handler.assigned_params)
+        self.assertEquals(self.handler.assigned_params["x"], "bb")
 
 
 class TestPackageHandler(unittest.TestCase):
@@ -68,12 +68,12 @@ class TestPackageHandler(unittest.TestCase):
         block.append("}")
 
         handler.scan_used([block])
-        self.assertEqual(len(list(handler.get_assignments())), 1)
+        self.assertEqual(len(list(handler.get_params())), 1)
 
     def test_should_clear_old_package_when_clear_and_scan_used_package(self):
         handler = PackageHandler()
         handler.add_declared("com.yyx.console", "com.yyx.console")
-        handler.assignment_manager.add_assignment(
+        handler.assignment_manager.add_assigned(
             "com.yyx.text", handler.handler_type
         )
         block = Block("if a == 1 {")
@@ -86,7 +86,7 @@ class TestPackageHandler(unittest.TestCase):
 
         self.assertEqual(handler.assignment_manager.length(), 1)
         self.assertTrue(
-            "com.yyx.text" not in handler.get_assignments()
+            "com.yyx.text" not in handler.get_params()
         )
 
 
@@ -113,20 +113,20 @@ class TestFuncHandler(unittest.TestCase):
         handler.scan_used([code])
 
         self.assertTrue(
-            "Str2int" in handler.get_assignments()
+            "Str2int" in handler.get_params()
         )
 
     def test_should_clear_old_assignment_when_clear(self):
         handler = FunctionHandler()
         handler.add_declared("Str2int", Block("func Str2int(sint string) {"))
-        handler.assignment_manager.add_assignment("aaa", handler.handler_type)
+        handler.assignment_manager.add_assigned("aaa", handler.handler_type)
         handler.assignment_manager.clear()
 
         code = Block('fmt.Println("test" + Str2int("5"))')
         handler.scan_used([code])
 
-        self.assertTrue("Str2int" in handler.get_assignments())
-        self.assertTrue("aaa" not in handler.get_assignments())
+        self.assertTrue("Str2int" in handler.get_params())
+        self.assertTrue("aaa" not in handler.get_params())
 
 
 class TestCodeHandler(unittest.TestCase):
@@ -166,8 +166,8 @@ class TestCodeHandler(unittest.TestCase):
         block = Block('fmt.Println(a)')
         handler.scan_used([block])
 
-        self.assertEqual(len(list(handler.get_assignments())), 1)
-        self.assertTrue("a" in handler.get_assignments())
+        self.assertEqual(len(list(handler.get_params())), 1)
+        self.assertTrue("a" in handler.get_params())
 
     def test_is_need_compile_would_return_true_if_not_assignment_code(self):
         handler = CodeHandler()
@@ -178,7 +178,7 @@ class TestCodeHandler(unittest.TestCase):
         handler._blocks.append(declared_block)
         handler._blocks.append(block)
         handler.add_declared("a", declared_block)
-        handler.assignment_manager.add_assignment("a", handler.handler_type)
+        handler.assignment_manager.add_assigned("a", handler.handler_type)
 
         result = handler.need_compile(block)
 
