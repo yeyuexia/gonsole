@@ -171,17 +171,30 @@ class TestCodeHandler(unittest.TestCase):
 
     def test_is_need_compile_would_return_true_if_not_assignment_code(self):
         handler = CodeHandler()
+
+        declared_block = Block("var a string")
+        block = Block("fmt.Println(a)")
+
+        handler._blocks.append(declared_block)
+        handler._blocks.append(block)
+        handler.add_declared("a", declared_block)
         handler.assignment_manager.add_assignment("a", handler.handler_type)
 
-        result = handler.need_compile(Block("fmt.Println(a)"))
+        result = handler.need_compile(block)
 
         self.assertTrue(result)
 
     def test_is_used_assignment_need_compile_would_return_true(self):
         handler = CodeHandler()
-        handler.add_declared("a", Block("a := 1"))
 
-        result = handler.need_compile(Block("a.get()"))
+        declared_block = Block("a := 1")
+        block = Block("a.get()")
+
+        handler._blocks.append(declared_block)
+        handler._blocks.append(block)
+        handler.add_declared("a", declared_block)
+
+        result = handler.need_compile(block)
 
         self.assertTrue(result)
 

@@ -236,14 +236,22 @@ class CodeHandler(Handler):
     def parse_codes(self):
         return "\n".join(list(self._deflate_block(self.blocks)))
 
+    def get_propable_params(self, block):
+        for vari in self.get_assignments():
+            index = self._blocks.index(self.get_declared()[vari])
+            if index <= self._blocks.index(block):
+                yield vari
+
     def need_compile(self, block):
         if block == self._pre_executed:
             return True
 
+        params = list(self.get_propable_params(block))
+
         def check_has_assigned_vari(code):
             return any([
-                self.is_assigned(vari, code)
-                for vari in self.get_assignments()
+                self.is_assigned(param, code)
+                for param in params
             ])
         return any([
             check_has_assigned_vari(code)
