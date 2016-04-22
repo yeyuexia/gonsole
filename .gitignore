@@ -2,3 +2,7 @@ init/*
 *.pyc
 *.go
 console/*
+.idea/*
+Gonsole.egg-info/*
+build/*
+dist/*
