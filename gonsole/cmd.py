@@ -2,6 +2,7 @@
 
 import re
 import sys
+import readline  # import readline to fix console bug
 
 from .const import STANDARD_SPACE
 from .block import KeyboardInterruptInBlock, BlockGenerator
@@ -11,7 +12,6 @@ class Cmd(object):
     DIRECT_COMMAND_RE = re.compile(r"^(\d|\"|')+")
 
     def __init__(self):
-        self.stdin = sys.stdin
         self.stdout = sys.stdout
         self.lineno = 0
         self.block_generator = BlockGenerator(self.read_multi_line)
@@ -20,12 +20,7 @@ class Cmd(object):
         return ""
 
     def read_multi_line(self, iter_count=1):
-        self.output(STANDARD_SPACE*iter_count)
-        return self.stdin.readline().strip()
-
-    def preread(self):
-        self.stdout.write("[{0}] >".format(self.lineno))
-        self.stdout.flush()
+        return input(STANDARD_SPACE*iter_count).strip()
 
     def output(self, message=""):
         self.stdout.write(message+"\n")
@@ -43,34 +38,30 @@ class Cmd(object):
         while True:
             try:
                 self.lineno += 1
-                self.preread()
-                line = self.stdin.readline().strip()
-                if not len(line):
-                    self.output()
+                line = input("[{0}] >".format(self.lineno)).strip()
+                if not line:
                     continue
                 result = self.try_run_direct_command(line) or self._run(line)
                 if result:
                     self.output(result)
             except KeyboardInterruptInBlock:
                 continue
-            except EOFError:
-                continue
-            except KeyboardInterrupt:
+            except (EOFError, KeyboardInterrupt):
                 self.do_exit()
 
     def _run(self, line):
-        indentation = line.find(" ")
-        if indentation == -1:
-            head, args = line, []
-        else:
-            head, args = line[:indentation], [arg for arg in line.split() if arg]
+        def separate(x):
+            l = x.split()
+            return l[0], l[1:]
+
+        head, args = separate(line)
         try:
             return getattr(self, "do_" + head)(*args)
         except:
             return self.process(self.block_generator.generate(line))
 
     def process(self, block):
-        return None
+        raise NotImplementedError()
 
     def do_exit(self, *args):
         self.output("bye")

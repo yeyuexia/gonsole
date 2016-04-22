@@ -50,11 +50,11 @@ class TestConsole(unittest.TestCase):
     def test_handle_function_when_code_was_start_with_func(self):
         console = Console()
         console.custom_methods = mock.MagicMock()
-        code = "func test()"
+        block = Block("func test()")
 
-        console._run(code)
+        console.process(block)
 
-        console.custom_methods.add.assert_called_once()
+        console.custom_methods.add.assert_called_once_with(block)
 
     def test_call_export_when_input_export_command(self):
         console = Console()
@@ -63,7 +63,7 @@ class TestConsole(unittest.TestCase):
 
         console._run(code)
 
-        console.do_export.assert_called_once_with(*code.split())
+        console.do_export.assert_called_once_with("test")
 
     def test_give_a_direct_command_would_invoke_direct_method(self):
         console = Console()

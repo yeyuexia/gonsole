@@ -40,7 +40,7 @@ class Console(Cmd):
         print(post_to_playground(self.prepare()))
 
     def do_export(self, *args):
-        self._write_to_file(args[1], self.prepare())
+        self._write_to_file(args[0], self.prepare())
 
     def do_import(self, *args):
         if args[-1].endswith("("):
@@ -49,7 +49,7 @@ class Console(Cmd):
                 self._cache_import(code)
                 code = self.read_multi_line()
         else:
-            self._cache_import(args[1])
+            self._cache_import(args[0])
 
     def run_direct_command(self, text):
         execute_content = self.direct_command(text)
