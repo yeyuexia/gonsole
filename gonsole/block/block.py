@@ -16,26 +16,24 @@ class KeyboardInterruptInBlock(Exception):
 
 
 class BlockGenerator:
+    CONTINUOUS_SYMBOL = {"{": "}", "(": ")"}
     def __init__(self, continue_input):
         self.continue_input = continue_input
 
     def generate(self, code, iter_count=1):
         try:
             block = Block(code)
-            if code.strip().endswith("{"):
-                self.continuing_get_input("}", block, iter_count)
-            elif code.strip().endswith("("):
-                self.continuing_get_input(")", block, iter_count)
+            if code[-1] in self.CONTINUOUS_SYMBOL:
+                end_symbol = self.CONTINUOUS_SYMBOL[code[-1]]
+                code = self.continue_input(iter_count)
+                while not code.endswith(end_symbol):
+                    block.append(self.generate(code, iter_count + 1))
+                    code = self.continue_input(iter_count)
+                block.append(code)
         except KeyboardInterrupt:
             raise KeyboardInterruptInBlock()
         return block
 
-    def continuing_get_input(self, end_symbol, block, iter_count):
-        code = self.continue_input(iter_count)
-        while not code.endswith(end_symbol):
-            block.append(self.generate(code, iter_count + 1))
-            code = self.continue_input(iter_count)
-        block.append(code)
 
 
 class Block:
